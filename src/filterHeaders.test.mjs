@@ -37,4 +37,8 @@ test('filterHeaders', () => {
     filterHeaders(['user-agent', 'quan', 'content-length', '333', 'transfer-encoding', 'chunked'], ['Content-length', 'transfer-encoding']),
     ['user-agent', 'quan'],
   );
+  assert.deepEqual(
+    filterHeaders(['aA', 'bb', 'cC', 'dd'], ['CC']),
+    ['aA', 'bb'],
+  );
 });
