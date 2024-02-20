@@ -12,6 +12,10 @@ test('convertObjectToArray', () => {
     ['name', 'quan'],
   );
   assert.deepEqual(
+    convertObjectToArray({ name: '你好' }),
+    ['name', '%E4%BD%A0%E5%A5%BD'],
+  );
+  assert.deepEqual(
     convertObjectToArray({ name: 'quan', bar: [1, 2, 3] }),
     ['name', 'quan', 'bar', '1', 'bar', '2', 'bar', '3'],
   );
