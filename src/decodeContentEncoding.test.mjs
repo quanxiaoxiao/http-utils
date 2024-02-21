@@ -8,7 +8,10 @@ import {
 import decodeContentEncoding from './decodeContentEncoding.mjs';
 
 test('decodeContentEncoding', () => {
-  assert(Buffer.from([]).equals(decodeContentEncoding()));
+  assert(Buffer.from([]).equals(decodeContentEncoding(Buffer.from([]))));
+  assert.throws(() => {
+    decodeContentEncoding();
+  });
   assert.throws(() => {
     decodeContentEncoding('aaa');
   });

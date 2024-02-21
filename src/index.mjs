@@ -4,6 +4,8 @@ import parseCookie from './parseCookie.mjs';
 import setHeaders from './setHeaders.mjs';
 import filterHeaders from './filterHeaders.mjs';
 import getValue from './getValue.mjs';
+import decodeContentEncoding from './decodeContentEncoding.mjs';
+import decodeContentToJSON from './decodeContentToJSON.mjs';
 
 export {
   convertObjectToArray,
@@ -12,4 +14,6 @@ export {
   filterHeaders,
   setHeaders,
   getValue,
+  decodeContentEncoding,
+  decodeContentToJSON,
 };

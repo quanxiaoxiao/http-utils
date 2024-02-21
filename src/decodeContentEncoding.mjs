@@ -6,11 +6,11 @@ import {
 } from 'node:zlib';
 
 export default (chunk, encoding) => {
-  if (!chunk || chunk.length === 0) {
+  assert(Buffer.isBuffer(chunk));
+
+  if (chunk.length === 0) {
     return Buffer.from([]);
   }
-
-  assert(Buffer.isBuffer(chunk));
 
   if (encoding == null) {
     return chunk;
