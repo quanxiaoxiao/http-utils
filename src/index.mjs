@@ -6,6 +6,7 @@ import filterHeaders from './filterHeaders.mjs';
 import getValue from './getValue.mjs';
 import decodeContentEncoding from './decodeContentEncoding.mjs';
 import decodeContentToJSON from './decodeContentToJSON.mjs';
+import getCurrentDateName from './getCurrentDateName.mjs';
 
 export {
   convertObjectToArray,
@@ -16,4 +17,5 @@ export {
   getValue,
   decodeContentEncoding,
   decodeContentToJSON,
+  getCurrentDateName,
 };
