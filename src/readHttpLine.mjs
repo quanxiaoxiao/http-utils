@@ -53,7 +53,7 @@ export default (
   }
   if (index === -1) {
     if (len - start >= max) {
-      throw new HttpParseError('start exceed buf size', statusCode);
+      throw new HttpParseError('chunk exceed max size', statusCode);
     }
     return null;
   }
