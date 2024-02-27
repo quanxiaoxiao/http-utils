@@ -1,50 +1,13 @@
+import { PassThrough } from 'node:stream';
 import test from 'node:test';
 import http from 'node:http';
 import assert from 'node:assert';
 import encodeHttp from './encodeHttp.mjs';
 
 test('encodeHttp', () => {
-  assert.throws(() => {
-    encodeHttp({
-      body: null,
-      headers: 'aa',
-    });
-  });
-  assert.throws(() => {
-    encodeHttp({
-      headers: ['name'],
-      body: null,
-    });
-  });
   assert.equal(
     encodeHttp({ body: null }).toString(),
     'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n',
-  );
-  assert.equal(
-    encodeHttp({
-      headers: ['name', 'aa'],
-      body: null,
-    }).toString(),
-    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
-  );
-  assert.equal(
-    encodeHttp({
-      headers: {
-        name: 'aa',
-      },
-      body: null,
-    }).toString(),
-    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
-  );
-  assert.equal(
-    encodeHttp({
-      headers: {
-        foo: null,
-        name: 'aa',
-      },
-      body: null,
-    }).toString(),
-    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
   );
   assert.equal(
     typeof encodeHttp({}),
@@ -144,5 +107,122 @@ test('encodeHttp request with startline', () => {
       body: null,
     }).toString(),
     'OPTIONS /bb HTTP/1.1\r\nContent-Length: 0\r\n\r\n',
+  );
+});
+
+test('encodeHttp with headers', () => {
+  assert.throws(() => {
+    encodeHttp({
+      body: null,
+      headers: 'aa',
+    });
+  });
+  assert.throws(() => {
+    encodeHttp({
+      headers: ['name'],
+      body: null,
+    });
+  });
+  assert.equal(
+    encodeHttp({
+      headers: ['name', 'aa'],
+      body: null,
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
+  );
+  assert.equal(
+    encodeHttp({
+      headers: ['Content-Length', '99'],
+      body: null,
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n',
+  );
+  assert.equal(
+    encodeHttp({
+      headers: ['Transfer-Encoding', 'chunked'],
+      body: null,
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n',
+  );
+  assert.equal(
+    encodeHttp({
+      headers: {
+        name: 'aa',
+      },
+      body: null,
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
+  );
+  assert.equal(
+    encodeHttp({
+      headers: {
+        foo: null,
+        name: 'aa',
+      },
+      body: null,
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
+  );
+  assert.equal(
+    encodeHttp({
+      headers: {
+        'Content-Length': 99,
+        name: 'aa',
+      },
+      body: null,
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
+  );
+  assert.equal(
+    encodeHttp({
+      headers: {
+        'Transfer-Encoding': 'chunked',
+        name: 'aa',
+      },
+      body: null,
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nname: aa\r\nContent-Length: 0\r\n\r\n',
+  );
+});
+
+test('encodeHttp with body', () => {
+  assert.throws(() => {
+    encodeHttp({
+      body: 1,
+    });
+  });
+  assert.throws(() => {
+    encodeHttp({
+      body: [],
+    });
+  });
+  assert.throws(() => {
+    encodeHttp({
+      body: {},
+    });
+  });
+  assert.equal(
+    encodeHttp({
+      body: Buffer.from([]),
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n',
+  );
+  assert.equal(
+    encodeHttp({
+      body: 'aaa',
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\naaa',
+  );
+  assert.equal(
+    encodeHttp({
+      body: Buffer.from('aaa'),
+    }).toString(),
+    'HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\naaa',
+  );
+  assert.equal(
+    typeof encodeHttp({
+      body: new PassThrough(),
+    }),
+    'function',
   );
 });
