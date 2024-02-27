@@ -111,4 +111,8 @@ test('readHttpLine', () => {
     readHttpLine(Buffer.from('abc\r\n'), 3).toString(),
     '',
   );
+  assert.equal(
+    readHttpLine(Buffer.from('abc\r\n'), 1).toString(),
+    'bc',
+  );
 });
