@@ -623,6 +623,62 @@ test('encodeHttp with stream body 9', () => {
   assert.equal(onEnd.mock.calls.length, 1);
 });
 
+test('encodeHttp with stream body 10', () => {
+  const onHeader = mock.fn((chunk) => {
+    assert.equal(
+      chunk.toString(),
+      'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n',
+    );
+  });
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, 0);
+  });
+  const encode = encodeHttp({
+    onHeader,
+    body: new PassThrough(),
+    onEnd,
+  });
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(onEnd.mock.calls.length, 0);
+  encode();
+  assert.equal(onEnd.mock.calls.length, 1);
+  assert.equal(onHeader.mock.calls.length, 1);
+});
+
+test('encodeHttp with stream body 11', () => {
+  const onStartLine = mock.fn((chunk) => {
+    assert.equal(
+      chunk.toString(),
+      'HTTP/1.1 200 OK',
+    );
+  });
+  const onHeader = mock.fn((chunk) => {
+    assert.equal(
+      chunk.toString(),
+      'name: quan\r\nTransfer-Encoding: chunked\r\n',
+    );
+  });
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, 0);
+  });
+  const encode = encodeHttp({
+    onStartLine,
+    onHeader,
+    body: new PassThrough(),
+    headers: {
+      name: 'quan',
+    },
+    onEnd,
+  });
+  assert.equal(onStartLine.mock.calls.length, 1);
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(onEnd.mock.calls.length, 0);
+  encode();
+  assert.equal(onEnd.mock.calls.length, 1);
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(onStartLine.mock.calls.length, 1);
+});
+
 test('encodeHttp with chunk 1', () => {
   const encode = encodeHttp({});
   assert.equal(
@@ -731,4 +787,23 @@ test('encodeHttp with chunk 6', () => {
   );
   assert.equal(onHeader.mock.calls.length, 1);
   assert.equal(onStartLine.mock.calls.length, 1);
+});
+
+test('encodeHttp with chunk 7', () => {
+  const onHeader = mock.fn((chunk) => {
+    assert.equal(
+      chunk.toString(),
+      'HTTP/1.1 200 OK\r\n',
+    );
+  });
+  const encode = encodeHttp({
+    onHeader,
+  });
+  assert.equal(onHeader.mock.calls.length, 0);
+  const chunk = encode();
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(
+    chunk.toString(),
+    'HTTP/1.1 200 OK\r\n\r\n',
+  );
 });
