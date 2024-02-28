@@ -9,13 +9,6 @@ const crlf = Buffer.from('\r\n');
 const HTTP_VERSION = '1.1';
 const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
 
-export class HttpEncodeError extends Error {
-  constructor(message) {
-    super(message);
-    this.message = message || 'HTTP Encode Error';
-  }
-}
-
 const encodeHeaders = (arr) => {
   const result = [];
   const len = arr.length;
@@ -131,9 +124,7 @@ export default (options) => {
 
   return (data) => {
     if (data != null) {
-      if (!Buffer.isBuffer(data) && typeof data !== 'string') {
-        throw new HttpEncodeError('body invalid');
-      }
+      assert(Buffer.isBuffer(data) || typeof data === 'string');
     }
     assert(!state.complete);
     const chunk = data != null ? Buffer.from(data) : null;
