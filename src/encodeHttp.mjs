@@ -123,10 +123,10 @@ export default (options) => {
   }
 
   return (data) => {
+    assert(!state.complete);
     if (data != null) {
       assert(Buffer.isBuffer(data) || typeof data === 'string');
     }
-    assert(!state.complete);
     const chunk = data != null ? Buffer.from(data) : null;
 
     if (!chunk || chunk.length === 0) {
