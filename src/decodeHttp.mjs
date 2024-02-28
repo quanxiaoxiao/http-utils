@@ -2,7 +2,6 @@
 import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
 import readHttpLine from './readHttpLine.mjs';
-import filterHeaders from './filterHeaders.mjs';
 
 class HttpParserError extends Error {
   constructor(message, statusCode) {
@@ -152,16 +151,14 @@ const decodeHttp = ({
       }
     }
     if (isHeaderComplete) {
-      if (!Object.hasOwnProperty.call(state.headers, 'content-length')
-        && (state.headers['transfer-encoding'] || '').toLowerCase() !== 'chunked') {
-        state.headers['content-length'] = 0;
-      }
-      if ((state.headers['transfer-encoding'] || '').toLowerCase() === 'chunked') {
+      if (state.headers['transfer-encoding']
+        && state.headers['transfer-encoding'].toLowerCase() === 'chunked') {
         state.chunkSize = -1;
         if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
           delete state.headers['content-length'];
-          state.headersRaw = filterHeaders(state.headersRaw, ['content-length']);
         }
+      } else if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
+        state.headers['content-length'] = 0;
       }
       if (onHeader) {
         await onHeader({

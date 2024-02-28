@@ -293,8 +293,36 @@ test('decodeHttp > decodeHttpRequest headers set default content-length 1', asyn
 test('decodeHttp > decodeHttpRequest headers set default content-length 2', async () => {
   const decode = decodeHttpRequest();
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
-  const ret = await decode(Buffer.from('name  : aaa\r\n\r\n'));
+  let ret = await decode(Buffer.from('name  : aaa\r\n'));
+  assert.deepEqual(ret.headers, { name: 'aaa' });
+  assert.deepEqual(ret.headersRaw, ['name', 'aaa']);
+  assert(!ret.complete);
+  ret = await decode(Buffer.from('\r\n'));
   assert.deepEqual(ret.headers, { 'content-length': 0, name: 'aaa' });
   assert.deepEqual(ret.headersRaw, ['name', 'aaa']);
   assert(ret.complete);
+});
+
+test('decodeHttp > decodeHttpRequest headers with transfer-encoding: chunked 1', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('Transfer-Encoding: chunked\r\n'));
+  assert.deepEqual(ret.headers, { 'transfer-encoding': 'chunked' });
+  assert.deepEqual(ret.headersRaw, ['Transfer-Encoding', 'chunked']);
+  ret = await decode(Buffer.from('\r\n'));
+  assert.deepEqual(ret.headers, { 'transfer-encoding': 'chunked' });
+  assert.deepEqual(ret.headersRaw, ['Transfer-Encoding', 'chunked']);
+  assert(!ret.complete);
+});
+
+test('decodeHttp > decodeHttpRequest headers with transfer-encoding: chunked 2', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('Transfer-Encoding: chunked\r\nContent-Length: 22\r\n'));
+  assert.deepEqual(ret.headers, { 'transfer-encoding': 'chunked', 'content-length': 22 });
+  assert.deepEqual(ret.headersRaw, ['Transfer-Encoding', 'chunked', 'Content-Length', '22']);
+  ret = await decode(Buffer.from('\r\n'));
+  assert.deepEqual(ret.headers, { 'transfer-encoding': 'chunked' });
+  assert.deepEqual(ret.headersRaw, ['Transfer-Encoding', 'chunked', 'Content-Length', '22']);
+  assert(!ret.complete);
 });
