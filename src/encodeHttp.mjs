@@ -138,10 +138,7 @@ export default (options) => {
             if (onEnd) {
               onEnd(0);
             }
-            return Buffer.concat([
-              crlf,
-              BODY_CHUNK_END,
-            ]);
+            return BODY_CHUNK_END;
           }
           onHeader(Buffer.concat([
             ...onStartLine ? [] : [startlineBuf, crlf],

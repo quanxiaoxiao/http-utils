@@ -404,7 +404,7 @@ test('encodeHttp with chunked 3', () => {
   assert.equal(chunkWithEnd.toString(), '0\r\n\r\n');
 });
 
-test('encodeHttp with stream body', () => {
+test('encodeHttp with stream body 1', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\nname: quan\r\nTransfer-Encoding: chunked\r\n');
   });
@@ -428,4 +428,195 @@ test('encodeHttp with stream body', () => {
   assert.throws(() => {
     encode(Buffer.from('aaa'));
   });
+});
+
+test('encodeHttp with stream body 2', () => {
+  const encode = encodeHttp({
+    body: new PassThrough(),
+  });
+  const chunk = encode();
+  assert.equal(
+    chunk.toString(),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n',
+  );
+});
+
+test('encodeHttp with stream body 3', () => {
+  const onHeader = mock.fn((chunk) => {
+    assert.equal(
+      chunk.toString(),
+      'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n',
+    );
+  });
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onHeader,
+  });
+  const chunk = encode();
+  assert.equal(
+    chunk.toString(),
+    '0\r\n\r\n',
+  );
+  assert.equal(onHeader.mock.calls.length, 1);
+});
+
+test('encodeHttp with stream body 4', () => {
+  const onStartLine = mock.fn((chunk) => {
+    assert.equal(
+      chunk.toString(),
+      'HTTP/1.1 200 OK',
+    );
+  });
+  const onHeader = mock.fn((chunk) => {
+    assert.equal(
+      chunk.toString(),
+      'Transfer-Encoding: chunked\r\n',
+    );
+  });
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onStartLine,
+    onHeader,
+  });
+  const chunk = encode();
+  assert.equal(
+    chunk.toString(),
+    '0\r\n\r\n',
+  );
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(onStartLine.mock.calls.length, 1);
+});
+
+test('encodeHttp with stream body 5', () => {
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, 0);
+  });
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onEnd,
+  });
+  const chunk = encode();
+  assert.equal(
+    chunk.toString(),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n0\r\n\r\n',
+  );
+  assert.equal(onEnd.mock.calls.length, 1);
+});
+
+test('encodeHttp with stream body 6', () => {
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, 5);
+  });
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onEnd,
+  });
+  let chunk = encode('aaa');
+  assert.equal(
+    chunk.toString(),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\naaa\r\n',
+  );
+  assert.equal(onEnd.mock.calls.length, 0);
+  chunk = encode('bb');
+  assert.equal(
+    chunk.toString(),
+    '2\r\nbb\r\n',
+  );
+  assert.equal(onEnd.mock.calls.length, 0);
+  chunk = encode(null);
+  assert.equal(
+    chunk.toString(),
+    '0\r\n\r\n',
+  );
+  assert.equal(onEnd.mock.calls.length, 1);
+});
+
+test('encodeHttp with stream body 6', () => {
+  const onHeader = mock.fn(() => {});
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onHeader,
+  });
+  assert.equal(onHeader.mock.calls.length, 1);
+  const chunk = encode();
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(
+    chunk.toString(),
+    '0\r\n\r\n',
+  );
+});
+
+test('encodeHttp with stream body 7', () => {
+  const onHeader = mock.fn(() => {});
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onHeader,
+  });
+  assert.equal(onHeader.mock.calls.length, 1);
+  let chunk = encode('bbb');
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(
+    chunk.toString(),
+    '3\r\nbbb\r\n',
+  );
+  chunk = encode(null);
+  assert.equal(
+    chunk.toString(),
+    '0\r\n\r\n',
+  );
+});
+
+test('encodeHttp with stream body 8', () => {
+  const bufList = [];
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, 5);
+  });
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onEnd,
+    onHeader: (chunk) => {
+      bufList.push(chunk);
+    },
+  });
+  bufList.push(Buffer.from('\r\n'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  bufList.push(encode('bbb'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  bufList.push(encode('11'));
+  bufList.push(encode(null));
+  assert.equal(
+    Buffer.concat(bufList),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nbbb\r\n2\r\n11\r\n0\r\n\r\n',
+  );
+  assert.equal(onEnd.mock.calls.length, 1);
+});
+
+test('encodeHttp with stream body 9', () => {
+  const bufList = [];
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, 5);
+  });
+  const encode = encodeHttp({
+    body: new PassThrough(),
+    onStartLine: (chunk) => {
+      bufList.push(chunk);
+    },
+    onEnd,
+    onHeader: (chunk) => {
+      bufList.push(Buffer.from('\r\n'));
+      bufList.push(chunk);
+    },
+  });
+  assert.equal(onEnd.mock.calls.length, 0);
+  bufList.push(Buffer.from('\r\n'));
+  bufList.push(encode('bbb'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  bufList.push(encode('11'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  bufList.push(encode(null));
+  assert.equal(
+    Buffer.concat(bufList),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nbbb\r\n2\r\n11\r\n0\r\n\r\n',
+  );
+  assert.equal(onEnd.mock.calls.length, 1);
 });
