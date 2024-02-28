@@ -326,3 +326,60 @@ test('decodeHttp > decodeHttpRequest headers with transfer-encoding: chunked 2',
   assert.deepEqual(ret.headersRaw, ['Transfer-Encoding', 'chunked', 'Content-Length', '22']);
   assert(!ret.complete);
 });
+
+test('decodeHttp > decodeHttpRequest body with content-length 1', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('Content-Length: 5\r\n\r\n'));
+  assert(!ret.complete);
+  ret = await decode(Buffer.from('bbb'));
+  assert(!ret.complete);
+  assert.equal(ret.body.toString(), 'bbb');
+  assert.equal(ret.dataBuf.toString(), '');
+  ret = await decode(Buffer.from('45678'));
+  assert.equal(ret.body.toString(), 'bbb45');
+  assert.equal(ret.dataBuf.toString(), '678');
+  assert(ret.complete);
+  try {
+    await decode(Buffer.from('bbb'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert(error instanceof assert.AssertionError);
+  }
+});
+
+test('decodeHttp > decodeHttpRequest body with content-length 2', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('name: aaa\r\n\r\n'));
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert(ret.complete);
+});
+
+test('decodeHttp > decodeHttpRequest body with content-length 3', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 0\r\n\r\n'));
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert(ret.complete);
+});
+
+test('decodeHttp > decodeHttpRequest body with content-length 4', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 0\r\n\r\naaabbb'));
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'aaabbb');
+  assert(ret.complete);
+});
+
+test('decodeHttp > decodeHttpRequest body with content-length 5', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('name: aaa\r\n\r\naaabbb'));
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'aaabbb');
+  assert(ret.complete);
+});
