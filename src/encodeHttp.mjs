@@ -53,13 +53,17 @@ export default (options) => {
 
   assert(httpHeaders.length % 2 === 0);
 
+  const hasBody = Object.hasOwnProperty.call(options, 'body');
+  const isBodyStream = options.body && (typeof options.body.pipe === 'function');
+
+  if (hasBody && !isBodyStream && body != null) {
+    assert(Buffer.isBuffer(body) || typeof body === 'string');
+  }
+
   const keyValuePairList = filterHeaders(
     httpHeaders,
     ['content-length', 'transfer-encoding'],
   );
-
-  const hasBody = Object.hasOwnProperty.call(options, 'body');
-  const isBodyStream = options.body && (typeof options.body.pipe === 'function');
 
   const startLines = [];
 
@@ -95,11 +99,9 @@ export default (options) => {
     if (body == null) {
       state.contentLength = 0;
       keyValuePairList.push(0);
-    } else if (Buffer.isBuffer(body) || typeof body === 'string') {
+    } else {
       state.contentLength = Buffer.byteLength(body);
       keyValuePairList.push(state.contentLength);
-    } else {
-      throw new HttpEncodeError('encode body invalid');
     }
   }
 
@@ -118,15 +120,12 @@ export default (options) => {
         headersBuf,
         crlf,
       ];
+
       if (state.contentLength > 0) {
         bufList.push(Buffer.isBuffer(body) ? body : Buffer.from(body));
       }
-      const dataChunk = Buffer.concat(bufList);
-      if (onEnd) {
-        onEnd(state.contentLength);
-      }
 
-      return dataChunk;
+      return Buffer.concat(bufList);
     }
   }
 
