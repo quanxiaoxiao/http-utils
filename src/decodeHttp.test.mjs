@@ -384,6 +384,90 @@ test('decodeHttp > decodeHttpRequest body with content-length 5', async () => {
   assert(ret.complete);
 });
 
+test('decodeHttp > decodeHttpRequest body with chunked size invalid', async () => {
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\nbz\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n-0\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n-33\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n0.8\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n8.\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n8.9\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n12345689\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n12\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n2\r\naa\r\n1z\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+});
+
 test('decodeHttp > decodeHttpRequest body with chunked 1', async () => {
   const decode = decodeHttpRequest();
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
@@ -404,4 +488,13 @@ test('decodeHttp > decodeHttpRequest body with chunked 1', async () => {
   assert(ret.complete);
   assert.equal(ret.body.toString(), 'aaa45686');
   assert.equal(ret.dataBuf.toString(), 'aabbc');
+});
+
+test('decodeHttp > decodeHttpRequest body with chunked 2', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n0\r\n\r\n'));
+  assert(ret.complete);
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), '');
 });
