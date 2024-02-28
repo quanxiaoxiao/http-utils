@@ -383,3 +383,25 @@ test('decodeHttp > decodeHttpRequest body with content-length 5', async () => {
   assert.equal(ret.dataBuf.toString(), 'aaabbb');
   assert(ret.complete);
 });
+
+test('decodeHttp > decodeHttpRequest body with chunked 1', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n'));
+  assert(!ret.complete);
+  ret = await decode(Buffer.from('3\r\naaa\r'));
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'aaa\r');
+  ret = await decode(Buffer.from('\n5\r'));
+  assert(!ret.complete);
+  assert.equal(ret.body.toString(), 'aaa');
+  assert.equal(ret.dataBuf.toString(), '5\r');
+  ret = await decode(Buffer.from('\n45686\r\n0\r'));
+  assert(!ret.complete);
+  assert.equal(ret.body.toString(), 'aaa45686');
+  assert.equal(ret.dataBuf.toString(), '0\r');
+  ret = await decode(Buffer.from('\n\r\naabbc'));
+  assert(ret.complete);
+  assert.equal(ret.body.toString(), 'aaa45686');
+  assert.equal(ret.dataBuf.toString(), 'aabbc');
+});
