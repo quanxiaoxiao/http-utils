@@ -30,7 +30,8 @@
     "node": ">= 20.0.0"
   },
   "dependencies": {
-    "@quanxiaoxiao/datav": "^0.1.1",
+    "@quanxiaoxiao/datav": "^0.1.2",
+    "@quanxiaoxiao/utils": "^0.2.2",
     "lodash": "^4.17.21"
   }
 }

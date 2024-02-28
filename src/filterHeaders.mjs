@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { escapeString } from '@quanxiaoxiao/utils';
 
 export default (headers, keys) => {
   assert(Array.isArray(headers));
@@ -6,7 +7,7 @@ export default (headers, keys) => {
   if (keys.length === 0) {
     return headers;
   }
-  const regexp = new RegExp(`^${keys.join('|')}$`, 'i');
+  const regexp = new RegExp(`^${keys.map((s) => escapeString(s)).join('|')}$`, 'i');
   const result = [];
   for (let i = 0; i < headers.length;) {
     const key = headers[i];

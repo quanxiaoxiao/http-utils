@@ -14,6 +14,7 @@ test('getValue', () => {
   });
   assert.equal(getValue([], 'name'), null);
   assert.equal(getValue(['age', '33', 'name', 'quan'], 'name'), 'quan');
+  assert.equal(getValue(['age', '33', 'name', 'quan'], 'na'), null);
   assert.equal(getValue(['age', '33', 'name', 'quan'], 'big'), null);
   assert.equal(getValue(['age', '33', 'nAme', 'quan'], 'name'), 'quan');
   assert.equal(getValue(['age', '33', 'nAme', 'quan'], 'NAME'), 'quan');

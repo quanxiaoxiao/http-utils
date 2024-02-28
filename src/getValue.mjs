@@ -5,11 +5,11 @@ export default (arr, name) => {
   assert(typeof name === 'string');
   assert(name !== '');
   const result = [];
-  const regexp = new RegExp(name, 'i');
+  const keyName = name.toLowerCase();
   for (let i = 0; i < arr.length;) {
     const key = arr[i];
     const value = arr[i + 1];
-    if (regexp.test(key)) {
+    if (keyName === key.toLowerCase()) {
       result.push(decodeURIComponent(value));
     }
     i += 2;
