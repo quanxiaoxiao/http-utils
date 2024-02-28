@@ -260,7 +260,9 @@ const decodeHttp = ({
 
   const parseBody = async () => {
     assert(!isBodyParseComplete());
-    if ((state.headers['transfer-encoding'] || '').toLowerCase() === 'chunked') {
+    if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
+      assert(state.headers['transfer-encoding']);
+      assert(state.headers['transfer-encoding'].toLowerCase() === 'chunked');
       await parseBodyWithChunk();
     } else {
       await parseBodyWithContentLength();
