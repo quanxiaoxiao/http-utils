@@ -124,17 +124,17 @@ const decodeHttp = ({
           throw new HttpParserError('parse headers fail', isRequest ? 400 : null);
         }
         const headerKey = chunk.slice(0, indexSplit).toString().trim();
-        const value = chunk.slice(indexSplit + 1).toString().trim();
-        if (headerKey !== '' && value !== '') {
+        const headerValue = chunk.slice(indexSplit + 1).toString().trim();
+        if (headerKey !== '' && headerValue !== '') {
           state.headersRaw.push(headerKey);
-          state.headersRaw.push(value);
+          state.headersRaw.push(headerValue);
           const headerName = headerKey.toLowerCase();
           if (state.headers[headerName] != null) {
             state.headers[headerName] = Array.isArray(state.headers[headerName])
-              ? [...state.headers[headerName], value]
-              : [state.headers[headerName], value];
+              ? [...state.headers[headerName], headerValue]
+              : [state.headers[headerName], headerValue];
           } else if (headerName === 'content-length') {
-            const contentLength = parseInt(value, 10);
+            const contentLength = parseInt(headerValue, 10);
             if (Number.isNaN(contentLength)
                 || `${contentLength}` !== chunk.slice(indexSplit + 1).toString().trim()
                 || contentLength < 0
@@ -143,7 +143,7 @@ const decodeHttp = ({
             }
             state.headers[headerName] = contentLength;
           } else {
-            state.headers[headerName] = value;
+            state.headers[headerName] = headerValue;
           }
         }
       }

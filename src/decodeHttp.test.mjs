@@ -136,6 +136,16 @@ test('decodeHttp > decodeHttpRequest headers 1', async () => {
   assert.deepEqual(ret.headersRaw, ['Name', 'quan', 'Content-Length', '33']);
   assert.equal(ret.dataBuf.toString(), '');
   assert(!ret.complete);
+  ret = await decode(Buffer.from('foo     :      Bar     \r\n\r\naaa'));
+  assert.deepEqual(ret.headers, {
+    name: 'quan',
+    'content-length': 33,
+    foo: 'Bar',
+  });
+  assert.deepEqual(ret.headersRaw, ['Name', 'quan', 'Content-Length', '33', 'foo', 'Bar']);
+  assert(!ret.complete);
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(ret.body.toString(), 'aaa');
 });
 
 test('decodeHttp > decodeHttpRequest headers 2', async () => {
