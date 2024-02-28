@@ -3,7 +3,8 @@
   "version": "0.1.2",
   "type": "module",
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage"
   },
   "main": "./src/index.mjs",
   "exports": {
