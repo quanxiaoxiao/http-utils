@@ -166,37 +166,37 @@ export default (options) => {
     const lineBuf = Buffer.from(`${chunkSize.toString(16)}\r\n`);
     if (state.contentSize === 0) {
       state.contentSize = chunkSize;
-      if (!isBodyStream) {
-        keyValuePairList.push('Transfer-Encoding');
-        keyValuePairList.push('chunked');
-        if (onHeader) {
-          const headersBuf = encodeHeaders(keyValuePairList);
-          onHeader(Buffer.concat([
+      if (isBodyStream) {
+        if (!onHeader) {
+          return Buffer.concat([
             ...onStartLine ? [] : [startlineBuf, crlf],
-            headersBuf,
-          ]));
+            encodeHeaders(keyValuePairList),
+            crlf,
+            lineBuf,
+            chunk,
+            crlf,
+          ]);
         }
         return Buffer.concat([
-          startlineBuf,
-          crlf,
-          encodeHeaders(keyValuePairList),
-          crlf,
           lineBuf,
           chunk,
           crlf,
         ]);
       }
-      if (!onHeader) {
-        return Buffer.concat([
+      keyValuePairList.push('Transfer-Encoding');
+      keyValuePairList.push('chunked');
+      if (onHeader) {
+        const headersBuf = encodeHeaders(keyValuePairList);
+        onHeader(Buffer.concat([
           ...onStartLine ? [] : [startlineBuf, crlf],
-          encodeHeaders(keyValuePairList),
-          crlf,
-          lineBuf,
-          chunk,
-          crlf,
-        ]);
+          headersBuf,
+        ]));
       }
       return Buffer.concat([
+        startlineBuf,
+        crlf,
+        encodeHeaders(keyValuePairList),
+        crlf,
         lineBuf,
         chunk,
         crlf,
