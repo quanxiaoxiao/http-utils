@@ -1,4 +1,5 @@
 /* eslint no-nested-ternary: 0 */
+import { Buffer } from 'node:buffer';
 import http from 'node:http';
 import assert from 'node:assert';
 import _ from 'lodash';
