@@ -875,3 +875,32 @@ test('encodeHttp with chunk 9', () => {
   assert.equal(chunk.toString(), '0\r\n\r\n');
   assert.equal(onEnd.mock.calls.length, 1);
 });
+
+test('encodeHttp with chunk 10', () => {
+  const largeSize = 65535;
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, largeSize + 3);
+  });
+  const encode = encodeHttp({
+    onEnd,
+  });
+  let chunk = encode('abc');
+  assert.equal(
+    chunk.toString(),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n',
+  );
+  const buf = Buffer.alloc(largeSize);
+  chunk = encode(buf);
+  assert.equal(
+    chunk.toString(),
+    Buffer.concat([
+      Buffer.from('ffff\r\n'),
+      Buffer.alloc(65535),
+      Buffer.from('\r\n'),
+    ]).toString(),
+  );
+  assert.equal(onEnd.mock.calls.length, 0);
+  chunk = encode();
+  assert.equal(chunk.toString(), '0\r\n\r\n');
+  assert.equal(onEnd.mock.calls.length, 1);
+});
