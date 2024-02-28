@@ -259,3 +259,23 @@ test('decodeHttp > decodeHttpRequest headers content-length', async () => {
   ret = await decode(Buffer.from('conTent-length    : 99   \r\n'));
   assert.equal(ret.headers['content-length'], 99);
 });
+
+test('decodeHttp > decodeHttpRequest headers multile header key', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('name: aaa\r\n'));
+  assert.equal(ret.headers.name, 'aaa');
+  ret = await decode(Buffer.from('name: bbb'));
+  assert.equal(ret.headers.name, 'aaa');
+  assert.deepEqual(ret.headersRaw, ['name', 'aaa']);
+  assert.equal(ret.dataBuf.toString(), 'name: bbb');
+  ret = await decode(Buffer.from('\r\n'));
+  assert.deepEqual(ret.headers.name, ['aaa', 'bbb']);
+  assert.deepEqual(ret.headersRaw, ['name', 'aaa', 'name', 'bbb']);
+  ret = await decode(Buffer.from('server:quan\r\n'));
+  assert.deepEqual(ret.headers, {
+    name: ['aaa', 'bbb'],
+    server: 'quan',
+  });
+  assert.deepEqual(ret.headersRaw, ['name', 'aaa', 'name', 'bbb', 'server', 'quan']);
+});
