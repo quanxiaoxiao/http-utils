@@ -135,7 +135,7 @@ const decodeHttp = ({
             }
             const contentLength = parseInt(headerValue, 10);
             if (Number.isNaN(contentLength)
-                || `${contentLength}` !== chunk.slice(indexSplit + 1).toString().trim()
+                || `${contentLength}` !== headerValue
                 || contentLength < 0
             ) {
               throw new HttpParserError('parse headers fail', isRequest ? 400 : null);
