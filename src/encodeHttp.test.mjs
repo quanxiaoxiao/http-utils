@@ -298,22 +298,7 @@ test('encodeHttp with onHeader 4', () => {
   assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\nname: quan\r\nContent-Length: 3\r\n\r\nabc');
 });
 
-test('encodeHttp with body', () => {
-  assert.throws(() => {
-    encodeHttp({
-      body: 1,
-    });
-  });
-  assert.throws(() => {
-    encodeHttp({
-      body: [],
-    });
-  });
-  assert.throws(() => {
-    encodeHttp({
-      body: {},
-    });
-  });
+test('encodeHttp with body 1', () => {
   assert.equal(
     encodeHttp({
       body: Buffer.from([]),
@@ -338,6 +323,15 @@ test('encodeHttp with body', () => {
     }),
     'function',
   );
+});
+
+test('encodeHttp with body 2', () => {
+  const onEnd = mock.fn(() => {});
+  encodeHttp({
+    onEnd,
+    body: '123',
+  });
+  assert.equal(onEnd.mock.calls.length, 0);
 });
 
 test('encodeHttp with empty chunked 1', () => {
