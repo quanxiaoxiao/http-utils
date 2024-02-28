@@ -132,26 +132,25 @@ export default (options) => {
     if (!chunk || chunk.length === 0) {
       state.complete = true;
       if (state.contentSize === 0) {
-        const headersBuf = encodeHeaders(keyValuePairList);
         if (onHeader) {
           if (isBodyStream) {
             if (onEnd) {
-              onEnd(0);
+              onEnd(state.contentSize);
             }
             return BODY_CHUNK_END;
           }
           onHeader(Buffer.concat([
             ...onStartLine ? [] : [startlineBuf, crlf],
-            headersBuf,
+            encodeHeaders(keyValuePairList),
           ]));
         }
         if (onEnd) {
-          onEnd(0);
+          onEnd(state.contentSize);
         }
         return Buffer.concat([
           startlineBuf,
           crlf,
-          headersBuf,
+          encodeHeaders(keyValuePairList),
           crlf,
           ...isBodyStream ? [BODY_CHUNK_END] : [],
         ]);
