@@ -129,19 +129,22 @@ const decodeHttp = ({
           state.headersRaw.push(headerKey);
           state.headersRaw.push(headerValue);
           const headerName = headerKey.toLowerCase();
-          if (state.headers[headerName] != null) {
-            state.headers[headerName] = Array.isArray(state.headers[headerName])
-              ? [...state.headers[headerName], headerValue]
-              : [state.headers[headerName], headerValue];
-          } else if (headerName === 'content-length') {
+          if (headerName === 'content-length') {
+            if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
+              throw new HttpParserError('parse headers fail', isRequest ? 400 : null);
+            }
             const contentLength = parseInt(headerValue, 10);
             if (Number.isNaN(contentLength)
                 || `${contentLength}` !== chunk.slice(indexSplit + 1).toString().trim()
                 || contentLength < 0
             ) {
-              throw new HttpParserError('parse headers fail, content-length invalid', isRequest ? 400 : null);
+              throw new HttpParserError('parse headers fail', isRequest ? 400 : null);
             }
             state.headers[headerName] = contentLength;
+          } else if (Object.hasOwnProperty.call(state.headers, headerName)) {
+            state.headers[headerName] = Array.isArray(state.headers[headerName])
+              ? [...state.headers[headerName], headerValue]
+              : [state.headers[headerName], headerValue];
           } else {
             state.headers[headerName] = headerValue;
           }
