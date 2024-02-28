@@ -8,6 +8,7 @@ import filterHeaders from './filterHeaders.mjs';
 const crlf = Buffer.from('\r\n');
 const HTTP_VERSION = '1.1';
 const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
+const MAX_CHUNK_SIZE = 65535;
 
 const encodeHeaders = (arr) => {
   const result = [];
@@ -21,6 +22,31 @@ const encodeHeaders = (arr) => {
     i += 2;
   }
   return Buffer.concat(result);
+};
+
+const wrapChunk = (chunk) => {
+  const size = chunk.length;
+  if (size > MAX_CHUNK_SIZE) {
+    const n = Math.floor(size / MAX_CHUNK_SIZE);
+    const remain = size - n * MAX_CHUNK_SIZE;
+    const result = [];
+    for (let i = 0; i < n; i++) {
+      result.push(Buffer.from('ffff\r\n'));
+      result.push(chunk.slice(i * MAX_CHUNK_SIZE, (i + 1) * MAX_CHUNK_SIZE));
+      result.push(crlf);
+    }
+    if (remain !== 0) {
+      result.push(Buffer.from(`${remain.toString(16)}\r\n`));
+      result.push(chunk.slice(n * MAX_CHUNK_SIZE));
+      result.push(crlf);
+    }
+    return Buffer.concat(result);
+  }
+  return Buffer.concat([
+    Buffer.from(`${size.toString(16)}\r\n`),
+    chunk,
+    crlf,
+  ]);
 };
 
 export default (options) => {
@@ -162,7 +188,6 @@ export default (options) => {
     }
 
     const chunkSize = chunk.length;
-    const lineBuf = Buffer.from(`${chunkSize.toString(16)}\r\n`);
     if (state.contentSize === 0) {
       state.contentSize = chunkSize;
       if (isBodyStream) {
@@ -171,16 +196,10 @@ export default (options) => {
             ...onStartLine ? [] : [startlineBuf, crlf],
             encodeHeaders(keyValuePairList),
             crlf,
-            lineBuf,
-            chunk,
-            crlf,
+            wrapChunk(chunk),
           ]);
         }
-        return Buffer.concat([
-          lineBuf,
-          chunk,
-          crlf,
-        ]);
+        return wrapChunk(chunk);
       }
       keyValuePairList.push('Transfer-Encoding');
       keyValuePairList.push('chunked');
@@ -196,16 +215,10 @@ export default (options) => {
         crlf,
         encodeHeaders(keyValuePairList),
         crlf,
-        lineBuf,
-        chunk,
-        crlf,
+        wrapChunk(chunk),
       ]);
     }
     state.contentSize += chunkSize;
-    return Buffer.concat([
-      lineBuf,
-      chunk,
-      crlf,
-    ]);
+    return wrapChunk(chunk);
   };
 };

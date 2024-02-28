@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import { PassThrough } from 'node:stream';
 import { test, mock } from 'node:test';
 import http from 'node:http';
@@ -806,4 +807,71 @@ test('encodeHttp with chunk 7', () => {
     chunk.toString(),
     'HTTP/1.1 200 OK\r\n\r\n',
   );
+});
+
+test('encodeHttp with chunk 8', () => {
+  const largeSize = 65535 * 2 + 22;
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, largeSize + 3);
+  });
+  const encode = encodeHttp({
+    onEnd,
+  });
+  let chunk = encode('abc');
+  assert.equal(
+    chunk.toString(),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n',
+  );
+  const buf = Buffer.alloc(largeSize);
+  chunk = encode(buf);
+  assert.equal(
+    chunk.toString(),
+    Buffer.concat([
+      Buffer.from('ffff\r\n'),
+      Buffer.alloc(65535),
+      Buffer.from('\r\n'),
+      Buffer.from('ffff\r\n'),
+      Buffer.alloc(65535),
+      Buffer.from('\r\n'),
+      Buffer.from('16\r\n'),
+      Buffer.alloc(22),
+      Buffer.from('\r\n'),
+    ]).toString(),
+  );
+  assert.equal(onEnd.mock.calls.length, 0);
+  chunk = encode();
+  assert.equal(chunk.toString(), '0\r\n\r\n');
+  assert.equal(onEnd.mock.calls.length, 1);
+});
+
+test('encodeHttp with chunk 9', () => {
+  const largeSize = 65535 * 2;
+  const onEnd = mock.fn((size) => {
+    assert.equal(size, largeSize + 3);
+  });
+  const encode = encodeHttp({
+    onEnd,
+  });
+  let chunk = encode('abc');
+  assert.equal(
+    chunk.toString(),
+    'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\nabc\r\n',
+  );
+  const buf = Buffer.alloc(largeSize);
+  chunk = encode(buf);
+  assert.equal(
+    chunk.toString(),
+    Buffer.concat([
+      Buffer.from('ffff\r\n'),
+      Buffer.alloc(65535),
+      Buffer.from('\r\n'),
+      Buffer.from('ffff\r\n'),
+      Buffer.alloc(65535),
+      Buffer.from('\r\n'),
+    ]).toString(),
+  );
+  assert.equal(onEnd.mock.calls.length, 0);
+  chunk = encode();
+  assert.equal(chunk.toString(), '0\r\n\r\n');
+  assert.equal(onEnd.mock.calls.length, 1);
 });
