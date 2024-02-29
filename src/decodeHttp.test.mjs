@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { decodeHttpRequest } from './decodeHttp.mjs';
+import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
 
 test('decodeHttp > decodeHttpRequest check input', async () => {
   try {
@@ -33,10 +33,49 @@ test('decodeHttp > decodeHttpRequest check input', async () => {
   }
 });
 
+test('decodeHttp > decodeHttpRequest decodeHttpResponse 1', async () => {
+  try {
+    const decode = decodeHttpResponse();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    throw new Error('xxxx');
+  } catch (error) {
+    assert(error.statusCode == null);
+    assert.equal(error.message, 'parse start line fail');
+  }
+  try {
+    const decode = decodeHttpResponse();
+    await decode(Buffer.from(Buffer.from('HTTP/1.1 200OK\r\n')));
+    throw new Error('xxxx');
+  } catch (error) {
+    assert(error.statusCode == null);
+    assert.equal(error.message, 'parse start line fail');
+  }
+  try {
+    const decode = decodeHttpResponse();
+    await decode(Buffer.from(Buffer.from('HTTP/1.1 0200 OK\r\n')));
+    throw new Error('xxxx');
+  } catch (error) {
+    assert(error.statusCode == null);
+    assert.equal(error.message, 'parse start line fail');
+  }
+  let decode = decodeHttpResponse();
+  let ret = await decode(Buffer.from('HTTP/1.1 200 OK\r\n'));
+  assert.equal(ret.httpVersion, '1.1');
+  assert.equal(ret.statusCode, 200);
+  assert.equal(ret.statusText, 'OK');
+
+  decode = decodeHttpResponse();
+  ret = await decode(Buffer.from('HTTP/1.0 208\r\n'));
+  assert.equal(ret.httpVersion, '1.0');
+  assert.equal(ret.statusCode, 208);
+  assert.equal(ret.statusText, null);
+});
+
 test('decodeHttp > decodeHttpRequest startline 1', async () => {
   try {
     const decode = decodeHttpRequest();
     await decode(Buffer.from('HTTP/1.1 200 OK\r\n'));
+    throw new Error('xxx');
   } catch (error) {
     assert.equal(error.statusCode, 400);
     assert.equal(error.message, 'parse start line fail');
@@ -44,6 +83,7 @@ test('decodeHttp > decodeHttpRequest startline 1', async () => {
   try {
     const decode = decodeHttpRequest();
     await decode(Buffer.from('GET HTTP/1.1\r\n'));
+    throw new Error('xxx');
   } catch (error) {
     assert.equal(error.statusCode, 400);
     assert.equal(error.message, 'parse start line fail');
@@ -51,6 +91,7 @@ test('decodeHttp > decodeHttpRequest startline 1', async () => {
   try {
     const decode = decodeHttpRequest();
     await decode(Buffer.from('GET / HTTP/1.1\n'));
+    throw new Error('xxx');
   } catch (error) {
     assert.equal(error.statusCode, 400);
   }
@@ -461,6 +502,16 @@ test('decodeHttp > decodeHttpRequest body with chunked size invalid', async () =
     const decode = decodeHttpRequest();
     await decode(Buffer.from('GET / HTTP/1.1\r\n'));
     await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n2\r\naa\r\n1z\r\n'));
+    throw new Error('xxx');
+  } catch (error) {
+    assert.equal(error.message, 'parse body fail');
+    assert.equal(error.statusCode, 400);
+  }
+
+  try {
+    const decode = decodeHttpRequest();
+    await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+    await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n2\r\naa\rb'));
     throw new Error('xxx');
   } catch (error) {
     assert.equal(error.message, 'parse body fail');

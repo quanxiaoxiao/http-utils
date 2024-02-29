@@ -28,9 +28,14 @@ const decodeHttp = ({
 }) => {
   const state = {
     step: 0,
+    count: 0,
+    bytes: 0,
     pending: false,
     httpVersion: null,
     statusText: null,
+    timeStart: performance.now(),
+    timeOnStartline: null,
+    timeOnHeaders: null,
     statusCode: null,
     method: null,
     path: null,
@@ -82,6 +87,7 @@ const decodeHttp = ({
     }
     state.dataBuf = state.dataBuf.slice(len + 2);
     state.size -= (len + 2);
+    state.timeOnStartline = performance.now();
     if (onStartLine) {
       if (isRequest) {
         await onStartLine({
@@ -160,6 +166,7 @@ const decodeHttp = ({
       } else if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
         state.headers['content-length'] = 0;
       }
+      state.timeOnHeaders = performance.now();
       if (onHeader) {
         await onHeader({
           headers: state.headers,
@@ -281,6 +288,9 @@ const decodeHttp = ({
     headers: state.headers,
     headersRaw: state.headersRaw,
     body: state.bodyBuf,
+    bytes: state.bytes,
+    count: state.count,
+    timeEnd: performance.now() - state.timeStart,
     dataBuf: state.dataBuf,
     complete: isBodyParseComplete(),
   });
@@ -294,9 +304,12 @@ const decodeHttp = ({
   return async (chunk) => {
     assert(Buffer.isBuffer(chunk));
     assert(!isBodyParseComplete());
+    state.count += 1;
+    const bytes = chunk.length;
 
-    if (chunk.length > 0) {
-      state.size += chunk.length;
+    if (bytes > 0) {
+      state.bytes += bytes;
+      state.size += bytes;
       state.dataBuf = Buffer.concat([
         state.dataBuf,
         chunk,
