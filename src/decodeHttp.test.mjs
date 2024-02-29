@@ -468,6 +468,15 @@ test('decodeHttp > decodeHttpRequest body with content-length 8', async () => {
   assert(ret.complete);
 });
 
+test('decodeHttp > decodeHttpRequest body with content-length 9', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 4\r\n\r\nfoob'));
+  assert.equal(ret.body.toString(), 'foob');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert(ret.complete);
+});
+
 test('decodeHttp > decodeHttpRequest body with chunked size invalid', async () => {
   try {
     const decode = decodeHttpRequest();
