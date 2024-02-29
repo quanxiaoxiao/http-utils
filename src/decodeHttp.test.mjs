@@ -395,6 +395,7 @@ test('decodeHttp > decodeHttpRequest body with content-length 2', async () => {
   const ret = await decode(Buffer.from('name: aaa\r\n\r\n'));
   assert.equal(ret.body.toString(), '');
   assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(typeof ret.timeOnBody, 'number');
   assert(ret.complete);
 });
 
@@ -404,6 +405,7 @@ test('decodeHttp > decodeHttpRequest body with content-length 3', async () => {
   const ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 0\r\n\r\n'));
   assert.equal(ret.body.toString(), '');
   assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(typeof ret.timeOnBody, 'number');
   assert(ret.complete);
 });
 
@@ -456,6 +458,7 @@ test('decodeHttp > decodeHttpRequest body with content-length 7', async () => {
   ret = await decode(Buffer.from('b'));
   assert.equal(ret.body.toString(), 'foob');
   assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(typeof ret.timeOnBody, 'number');
   assert(ret.complete);
 });
 
@@ -474,6 +477,7 @@ test('decodeHttp > decodeHttpRequest body with content-length 9', async () => {
   const ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 4\r\n\r\nfoob'));
   assert.equal(ret.body.toString(), 'foob');
   assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(typeof ret.timeOnBody, 'number');
   assert(ret.complete);
 });
 
