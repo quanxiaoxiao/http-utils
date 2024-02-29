@@ -189,6 +189,7 @@ const decodeHttp = ({
   const parseBodyWithContentLength = async () => {
     const contentLength = state.headers['content-length'];
     assert(contentLength >= 0);
+    assert(state.timeOnBody == null);
     if (contentLength !== 0) {
       if (state.bodyChunkSize + state.dataBuf.length < contentLength) {
         state.bodyChunkSize += state.dataBuf.length;
@@ -200,18 +201,24 @@ const decodeHttp = ({
         state.size = 0;
         await emitBodyChunk();
       } else {
-        state.bodyBuf = Buffer.concat([
-          state.bodyBuf,
-          state.dataBuf.slice(0, contentLength - state.bodyChunkSize),
-        ]);
-        state.dataBuf = state.dataBuf.slice(contentLength - state.bodyChunkSize);
+        const bodyChunkRemainSize = contentLength - state.bodyChunkSize;
+        if (bodyChunkRemainSize > 0) {
+          assert(state.dataBuf.length >= bodyChunkRemainSize);
+          state.bodyBuf = Buffer.concat([
+            state.bodyBuf,
+            state.dataBuf.slice(0, bodyChunkRemainSize),
+          ]);
+          state.dataBuf = state.dataBuf.slice(bodyChunkRemainSize);
+        }
         state.size = state.dataBuf.length;
         state.bodyChunkSize = contentLength;
+        state.timeOnBody = performance.now();
         await emitBodyChunk();
         state.step += 1;
       }
     } else {
       state.timeOnBody = performance.now();
+      assert(state.bodyChunkSize === 0);
       state.step += 1;
     }
   };
@@ -293,7 +300,10 @@ const decodeHttp = ({
     body: state.bodyBuf,
     bytes: state.bytes,
     count: state.count,
-    timeEnd: performance.now() - state.timeStart,
+    timeOnStartline: state.timeOnStartline,
+    timeOnHeaders: state.timeOnHeaders,
+    timeOnBody: state.timeOnBody,
+    duration: performance.now() - state.timeStart,
     dataBuf: state.dataBuf,
     complete: isBodyParseComplete(),
   });

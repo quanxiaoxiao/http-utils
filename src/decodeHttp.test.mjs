@@ -425,6 +425,49 @@ test('decodeHttp > decodeHttpRequest body with content-length 5', async () => {
   assert(ret.complete);
 });
 
+test('decodeHttp > decodeHttpRequest body with content-length 6', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 10\r\nfoo'));
+  assert.equal(ret.timeOnHeaders, null);
+  ret = await decode(Buffer.from(':bar\r\n\r\n1abc'));
+  assert.equal(typeof ret.timeOnHeaders, 'number');
+  assert.equal(ret.body.toString(), '1abc');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(ret.timeOnBody, null);
+  assert(!ret.complete);
+  ret = await decode(Buffer.from([]));
+  assert.equal(ret.body.toString(), '1abc');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(ret.timeOnBody, null);
+  assert(!ret.complete);
+  ret = await decode(Buffer.from('bb2390adsfjadsdf'));
+  assert.equal(ret.body.toString(), '1abcbb2390');
+  assert.equal(ret.dataBuf.toString(), 'adsfjadsdf');
+  assert.equal(typeof ret.timeOnBody, 'number');
+  assert(ret.complete);
+});
+
+test('decodeHttp > decodeHttpRequest body with content-length 7', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 4\r\n\r\nfoo'));
+  assert(!ret.complete);
+  ret = await decode(Buffer.from('b'));
+  assert.equal(ret.body.toString(), 'foob');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert(ret.complete);
+});
+
+test('decodeHttp > decodeHttpRequest body with content-length 8', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('name: aaa\r\nContent-Length: 4\r\n\r\nfoobc'));
+  assert.equal(ret.body.toString(), 'foob');
+  assert.equal(ret.dataBuf.toString(), 'c');
+  assert(ret.complete);
+});
+
 test('decodeHttp > decodeHttpRequest body with chunked size invalid', async () => {
   try {
     const decode = decodeHttpRequest();
