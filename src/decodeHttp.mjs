@@ -43,7 +43,7 @@ const decodeHttp = ({
     headers: {},
     headersRaw: [],
     size: 0,
-    chunkSize: 0,
+    bodyChunkSize: 0,
     dataBuf: Buffer.from([]),
     bodyBuf: Buffer.from([]),
   };
@@ -160,7 +160,7 @@ const decodeHttp = ({
     if (isHeaderComplete) {
       if (state.headers['transfer-encoding']
         && state.headers['transfer-encoding'].toLowerCase() === 'chunked') {
-        state.chunkSize = -1;
+        state.bodyChunkSize = -1;
         if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
           delete state.headers['content-length'];
         }
@@ -190,8 +190,8 @@ const decodeHttp = ({
     const contentLength = state.headers['content-length'];
     assert(contentLength >= 0);
     if (contentLength !== 0) {
-      if (state.chunkSize + state.dataBuf.length < contentLength) {
-        state.chunkSize += state.dataBuf.length;
+      if (state.bodyChunkSize + state.dataBuf.length < contentLength) {
+        state.bodyChunkSize += state.dataBuf.length;
         state.bodyBuf = Buffer.concat([
           state.bodyBuf,
           state.dataBuf,
@@ -202,11 +202,11 @@ const decodeHttp = ({
       } else {
         state.bodyBuf = Buffer.concat([
           state.bodyBuf,
-          state.dataBuf.slice(0, contentLength - state.chunkSize),
+          state.dataBuf.slice(0, contentLength - state.bodyChunkSize),
         ]);
-        state.dataBuf = state.dataBuf.slice(contentLength - state.chunkSize);
+        state.dataBuf = state.dataBuf.slice(contentLength - state.bodyChunkSize);
         state.size = state.dataBuf.length;
-        state.chunkSize = contentLength;
+        state.bodyChunkSize = contentLength;
         await emitBodyChunk();
         state.step += 1;
       }
@@ -218,26 +218,26 @@ const decodeHttp = ({
 
   const parseBodyWithChunk = async () => {
     assert(!isBodyParseComplete());
-    if (state.chunkSize !== -1) {
-      if (state.chunkSize + 2 <= state.dataBuf.length) {
-        if (state.dataBuf[state.chunkSize] !== crlf[0]
-              || state.dataBuf[state.chunkSize + 1] !== crlf[1]) {
+    if (state.bodyChunkSize !== -1) {
+      if (state.bodyChunkSize + 2 <= state.dataBuf.length) {
+        if (state.dataBuf[state.bodyChunkSize] !== crlf[0]
+              || state.dataBuf[state.bodyChunkSize + 1] !== crlf[1]) {
           throw new HttpParserError('parse body fail', isRequest ? 400 : null);
         }
-        if (state.chunkSize === 0) {
+        if (state.bodyChunkSize === 0) {
           state.step += 1;
-          state.chunkSize = -1;
+          state.bodyChunkSize = -1;
           state.dataBuf = state.dataBuf.slice(2);
           state.size = state.dataBuf.length;
         } else {
-          const chunk = state.dataBuf.slice(0, state.chunkSize);
+          const chunk = state.dataBuf.slice(0, state.bodyChunkSize);
           state.bodyBuf = Buffer.concat([
             state.bodyBuf,
             chunk,
           ]);
-          state.dataBuf = state.dataBuf.slice(state.chunkSize + 2);
+          state.dataBuf = state.dataBuf.slice(state.bodyChunkSize + 2);
           state.size = state.dataBuf.length;
-          state.chunkSize = -1;
+          state.bodyChunkSize = -1;
           await emitBodyChunk();
           await parseBodyWithChunk();
         }
@@ -260,7 +260,7 @@ const decodeHttp = ({
         }
         state.dataBuf = state.dataBuf.slice(index + 1);
         state.size = state.dataBuf.length;
-        state.chunkSize = chunkSize;
+        state.bodyChunkSize = chunkSize;
         await parseBodyWithChunk();
       } else if (chunk.length === MAX_CHUNK_LENGTH) {
         throw new HttpParserError('parse body fail', isRequest ? 400 : null);
