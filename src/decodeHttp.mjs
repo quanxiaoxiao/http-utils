@@ -36,6 +36,7 @@ const decodeHttp = ({
     timeStart: performance.now(),
     timeOnStartline: null,
     timeOnHeaders: null,
+    timeOnBody: null,
     statusCode: null,
     method: null,
     path: null,
@@ -187,7 +188,8 @@ const decodeHttp = ({
 
   const parseBodyWithContentLength = async () => {
     const contentLength = state.headers['content-length'];
-    if (contentLength > 0) {
+    assert(contentLength >= 0);
+    if (contentLength !== 0) {
       if (state.chunkSize + state.dataBuf.length < contentLength) {
         state.chunkSize += state.dataBuf.length;
         state.bodyBuf = Buffer.concat([
@@ -209,6 +211,7 @@ const decodeHttp = ({
         state.step += 1;
       }
     } else {
+      state.timeOnBody = performance.now();
       state.step += 1;
     }
   };
