@@ -7,6 +7,8 @@ import getValue from './getValue.mjs';
 import decodeContentEncoding from './decodeContentEncoding.mjs';
 import decodeContentToJSON from './decodeContentToJSON.mjs';
 import getCurrentDateName from './getCurrentDateName.mjs';
+import encodeHttp from './encodeHttp.mjs';
+import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
 
 export {
   convertObjectToArray,
@@ -18,4 +20,7 @@ export {
   decodeContentEncoding,
   decodeContentToJSON,
   getCurrentDateName,
+  encodeHttp,
+  decodeHttpRequest,
+  decodeHttpResponse,
 };
