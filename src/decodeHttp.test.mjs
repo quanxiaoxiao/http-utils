@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test, mock } from 'node:test';
 import assert from 'node:assert';
 import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
 
@@ -604,4 +604,17 @@ test('decodeHttp > decodeHttpRequest body with chunked 2', async () => {
   assert(ret.complete);
   assert.equal(ret.body.toString(), '');
   assert.equal(ret.dataBuf.toString(), '');
+});
+
+test('decodeHttp > decodeHttpRequest body content-length onBody 1', async () => {
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onBody,
+  });
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  const ret = await decode(Buffer.from('Content-Length: 0\r\n\r\nabcd'));
+  assert(ret.complete);
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'abcd');
+  assert.equal(onBody.mock.calls.length, 0);
 });
