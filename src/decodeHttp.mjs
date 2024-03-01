@@ -30,6 +30,7 @@ const decodeHttp = ({
     step: 0,
     count: 0,
     bytes: 0,
+    isRequest,
     pending: false,
     httpVersion: null,
     statusText: null,
@@ -63,17 +64,17 @@ const decodeHttp = ({
     const chunk = readHttpLine(
       state.dataBuf,
       0,
-      isRequest ? 400 : null,
+      state.isRequest ? 400 : null,
     );
     if (!chunk) {
       return;
     }
     const len = chunk.length;
-    const matches = chunk.toString().match(isRequest ? REQUEST_STARTLINE_REG : RESPONSE_STARTLINE_REG);
+    const matches = chunk.toString().match(state.isRequest ? REQUEST_STARTLINE_REG : RESPONSE_STARTLINE_REG);
     if (!matches) {
-      throw new HttpParserError('parse start line fail', isRequest ? 400 : null);
+      throw new HttpParserError('parse start line fail', state.isRequest ? 400 : null);
     }
-    if (isRequest) {
+    if (state.isRequest) {
       state.method = matches[1].toUpperCase();
       state.path = matches[2];
       state.httpVersion = matches[3];
@@ -97,7 +98,7 @@ const decodeHttp = ({
     state.size -= (len + 2);
     state.timeOnStartlineEnd = performance.now();
     if (onStartLine) {
-      if (isRequest) {
+      if (state.isRequest) {
         await onStartLine({
           path: state.path,
           method: state.method,
@@ -139,7 +140,7 @@ const decodeHttp = ({
       } else {
         const indexSplit = chunk.findIndex((b) => b === COLON_CHAR_CODE);
         if (indexSplit === -1) {
-          throw new HttpParserError('parse headers fail', isRequest ? 400 : null);
+          throw new HttpParserError('parse headers fail', state.isRequest ? 400 : null);
         }
         const headerKey = chunk.slice(0, indexSplit).toString().trim();
         const headerValue = chunk.slice(indexSplit + 1).toString().trim();
@@ -149,14 +150,14 @@ const decodeHttp = ({
           const headerName = headerKey.toLowerCase();
           if (headerName === 'content-length') {
             if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
-              throw new HttpParserError('parse headers fail', isRequest ? 400 : null);
+              throw new HttpParserError('parse headers fail', state.isRequest ? 400 : null);
             }
             const contentLength = parseInt(headerValue, 10);
             if (Number.isNaN(contentLength)
                 || `${contentLength}` !== headerValue
                 || contentLength < 0
             ) {
-              throw new HttpParserError('parse headers fail', isRequest ? 400 : null);
+              throw new HttpParserError('parse headers fail', state.isRequest ? 400 : null);
             }
             state.headers[headerName] = contentLength;
           } else if (Object.hasOwnProperty.call(state.headers, headerName)) {
@@ -241,7 +242,7 @@ const decodeHttp = ({
       if (state.bodyChunkSize + 2 <= state.dataBuf.length) {
         if (state.dataBuf[state.bodyChunkSize] !== crlf[0]
               || state.dataBuf[state.bodyChunkSize + 1] !== crlf[1]) {
-          throw new HttpParserError('parse body fail', isRequest ? 400 : null);
+          throw new HttpParserError('parse body fail', state.isRequest ? 400 : null);
         }
         if (state.bodyChunkSize === 0) {
           state.step += 1;
@@ -267,7 +268,7 @@ const decodeHttp = ({
       const index = chunk.findIndex((b) => b === crlf[1]);
       if (index !== -1) {
         if (index <= 1 || chunk[index - 1] !== crlf[0]) {
-          throw new HttpParserError('parse body fail', isRequest ? 400 : null);
+          throw new HttpParserError('parse body fail', state.isRequest ? 400 : null);
         }
         const hexChunkSize = chunk.slice(0, index - 1).toString();
         const chunkSize = parseInt(hexChunkSize, 16);
@@ -276,14 +277,14 @@ const decodeHttp = ({
               || chunkSize < 0
               || chunkSize > MAX_CHUNK_SIZE
         ) {
-          throw new HttpParserError('parse body fail', isRequest ? 400 : null);
+          throw new HttpParserError('parse body fail', state.isRequest ? 400 : null);
         }
         state.dataBuf = state.dataBuf.slice(index + 1);
         state.size = state.dataBuf.length;
         state.bodyChunkSize = chunkSize;
         await parseBodyWithChunk();
       } else if (chunk.length === MAX_CHUNK_LENGTH) {
-        throw new HttpParserError('parse body fail', isRequest ? 400 : null);
+        throw new HttpParserError('parse body fail', state.isRequest ? 400 : null);
       }
     }
   };
@@ -324,7 +325,7 @@ const decodeHttp = ({
       timeOnBodyEnd: null,
     };
 
-    if (isRequest) {
+    if (state.isRequest) {
       result.method = state.method;
       result.path = state.path;
     } else {
