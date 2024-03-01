@@ -34,9 +34,12 @@ const decodeHttp = ({
     httpVersion: null,
     statusText: null,
     timeStart: performance.now(),
-    timeOnStartline: null,
-    timeOnHeaders: null,
-    timeOnBody: null,
+    timeOnStartlineStart: null,
+    timeOnStartlineEnd: null,
+    timeOnHeadersStart: null,
+    timeOnHeadersEnd: null,
+    timeOnBodyStart: null,
+    timeOnBodyEnd: null,
     statusCode: null,
     method: null,
     path: null,
@@ -53,6 +56,10 @@ const decodeHttp = ({
 
   const parseStartLine = async () => {
     assert(state.step === 0);
+    assert(state.timeOnStartlineEnd == null);
+    if (state.timeOnStartlineStart == null) {
+      state.timeOnStartlineStart = performance.now();
+    }
     const chunk = readHttpLine(
       state.dataBuf,
       0,
@@ -88,7 +95,7 @@ const decodeHttp = ({
     }
     state.dataBuf = state.dataBuf.slice(len + 2);
     state.size -= (len + 2);
-    state.timeOnStartline = performance.now();
+    state.timeOnStartlineEnd = performance.now();
     if (onStartLine) {
       if (isRequest) {
         await onStartLine({
@@ -109,6 +116,11 @@ const decodeHttp = ({
 
   const parseHeaders = async () => {
     let isHeaderComplete = isHeaderPraseComplete();
+    assert(state.timeOnHeadersEnd == null);
+    assert(state.timeOnStartlineEnd != null);
+    if (state.timeOnHeadersStart == null) {
+      state.timeOnHeadersStart = performance.now();
+    }
     while (!isHeaderComplete
       && state.size >= 2) {
       const chunk = readHttpLine(
@@ -167,7 +179,7 @@ const decodeHttp = ({
       } else if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
         state.headers['content-length'] = 0;
       }
-      state.timeOnHeaders = performance.now();
+      state.timeOnHeadersEnd = performance.now();
       if (onHeader) {
         await onHeader({
           headers: state.headers,
@@ -189,7 +201,6 @@ const decodeHttp = ({
   const parseBodyWithContentLength = async () => {
     const contentLength = state.headers['content-length'];
     assert(contentLength >= 0);
-    assert(state.timeOnBody == null);
     if (contentLength !== 0) {
       if (state.bodyChunkSize + state.dataBuf.length < contentLength) {
         state.bodyChunkSize += state.dataBuf.length;
@@ -212,12 +223,12 @@ const decodeHttp = ({
         }
         state.size = state.dataBuf.length;
         state.bodyChunkSize = contentLength;
-        state.timeOnBody = performance.now();
+        state.timeOnBodyEnd = performance.now();
         await emitBodyChunk();
         state.step += 1;
       }
     } else {
-      state.timeOnBody = performance.now();
+      state.timeOnBodyEnd = performance.now();
       assert(state.bodyChunkSize === 0);
       state.step += 1;
     }
@@ -225,6 +236,7 @@ const decodeHttp = ({
 
   const parseBodyWithChunk = async () => {
     assert(!isBodyParseComplete());
+    assert(state.timeOnBodyEnd == null);
     if (state.bodyChunkSize !== -1) {
       if (state.bodyChunkSize + 2 <= state.dataBuf.length) {
         if (state.dataBuf[state.bodyChunkSize] !== crlf[0]
@@ -236,7 +248,7 @@ const decodeHttp = ({
           state.bodyChunkSize = -1;
           state.dataBuf = state.dataBuf.slice(2);
           state.size = state.dataBuf.length;
-          state.timeOnBody = performance.now();
+          state.timeOnBodyEnd = performance.now();
         } else {
           const chunk = state.dataBuf.slice(0, state.bodyChunkSize);
           state.bodyBuf = Buffer.concat([
@@ -277,6 +289,11 @@ const decodeHttp = ({
   };
 
   const parseBody = async () => {
+    assert(state.timeOnHeadersEnd != null);
+    assert(state.timeOnBodyEnd == null);
+    if (state.timeOnBodyStart == null) {
+      state.timeOnBodyStart = performance.now();
+    }
     assert(!isBodyParseComplete());
     if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
       assert(state.headers['transfer-encoding']);
@@ -288,27 +305,69 @@ const decodeHttp = ({
     }
   };
 
-  const getState = () => ({
-    ...isRequest ? {
-      method: state.method,
-      path: state.path,
-    } : {
-      statusCode: state.statusCode,
-      statusText: state.statusText,
-    },
-    httpVersion: state.httpVersion,
-    headers: state.headers,
-    headersRaw: state.headersRaw,
-    body: state.bodyBuf,
-    bytes: state.bytes,
-    count: state.count,
-    timeOnStartline: state.timeOnStartline,
-    timeOnHeaders: state.timeOnHeaders,
-    timeOnBody: state.timeOnBody,
-    duration: performance.now() - state.timeStart,
-    dataBuf: state.dataBuf,
-    complete: isBodyParseComplete(),
-  });
+  const getState = () => {
+    const result = {
+      httpVersion: state.httpVersion,
+      headers: state.headers,
+      headersRaw: state.headersRaw,
+      body: state.bodyBuf,
+      bytes: state.bytes,
+      count: state.count,
+      complete: isBodyParseComplete(),
+      dataBuf: state.dataBuf,
+      timeOnStartline: null,
+      timeOnHeaders: null,
+      timeOnBody: null,
+      timeOnStartlineEnd: null,
+      timeOnHeadersStart: null,
+      timeOnBodyStart: null,
+      timeOnBodyEnd: null,
+    };
+
+    if (isRequest) {
+      result.method = state.method;
+      result.path = state.path;
+    } else {
+      result.statusCode = state.statusCode;
+      result.statusText = state.statusText;
+    }
+
+    if (state.timeOnStartlineStart != null) {
+      result.timeOnStartlineStart = state.timeOnStartlineStart - state.timeStart;
+    }
+
+    if (state.timeOnStartlineEnd != null) {
+      assert(state.timeOnStartlineStart != null);
+      result.timeOnStartline = state.timeOnStartlineEnd - state.timeOnStartlineStart;
+      result.timeOnStartlineEnd = state.timeOnStartlineEnd - state.timeStart;
+    }
+
+    if (state.timeOnHeadersStart != null) {
+      result.timeOnHeadersStart = state.timeOnHeadersStart - state.timeStart;
+    }
+
+    if (state.timeOnHeadersEnd != null) {
+      assert(state.timeOnHeadersStart != null);
+      result.timeOnHeaders = state.timeOnHeadersEnd - state.timeOnHeadersStart;
+      result.timeOnHeadersEnd = state.timeOnHeadersEnd - state.timeStart;
+    }
+
+    if (state.timeOnBodyStart != null) {
+      result.timeOnBodyStart = state.timeOnBodyStart - state.timeStart;
+    }
+
+    if (state.timeOnBodyEnd != null) {
+      assert(state.timeOnBodyStart != null);
+      result.timeOnBody = state.timeOnBodyEnd - state.timeOnBodyStart;
+      result.timeOnBodyEnd = state.timeOnBodyEnd - state.timeStart;
+    }
+
+    if (result.complete) {
+      assert(result.timeOnBodyEnd != null);
+    }
+
+    return result;
+  };
 
   const processes = [
     parseStartLine,
