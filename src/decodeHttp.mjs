@@ -282,6 +282,7 @@ const decodeHttp = ({
       assert(state.headers['transfer-encoding'].toLowerCase() === 'chunked');
       await parseBodyWithChunk();
     } else {
+      assert(!state.headers['transfer-encoding'] || Object.hasOwnProperty.call(state.headers, 'transfer-encoding').toLowerCase() !== 'chunked');
       await parseBodyWithContentLength();
     }
   };
