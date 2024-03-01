@@ -1,5 +1,6 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert';
+import { waitFor } from '@quanxiaoxiao/utils';
 import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
 
 test('decodeHttp > decodeHttpRequest check input', async () => {
@@ -832,4 +833,43 @@ test('decodeHttp > decodeHttpRequest content-length onEnd', async () => {
   assert.equal(onEnd.mock.calls.length, 0);
   await decode(Buffer.from('aaaaaa'));
   assert.equal(onEnd.mock.calls.length, 1);
+});
+
+test('decodeHttp > decodeHttpRequest pending', async () => {
+  const onHeader = mock.fn(async () => {
+    await waitFor(500);
+  });
+  const onStartLine = mock.fn(async () => {
+    await waitFor(500);
+  });
+  const decode = decodeHttpRequest({
+    onStartLine,
+    onHeader,
+  });
+  setTimeout(async () => {
+    assert.equal(onHeader.mock.calls.length, 0);
+    assert.equal(onStartLine.mock.calls.length, 1);
+    const ret = await decode(Buffer.from('aa'));
+    assert.deepEqual(ret.headers, {});
+    assert.equal(ret.dataBuf.toString(), 'Content-Length: 8\r\n\r\naa');
+    assert.equal(ret.body.toString(), '');
+  }, 100);
+  setTimeout(async () => {
+    assert.equal(onHeader.mock.calls.length, 1);
+    assert.equal(onStartLine.mock.calls.length, 1);
+    const ret = await decode(Buffer.from('bb'));
+    assert.equal(ret.body.toString(), '');
+    assert.equal(ret.dataBuf.toString(), 'aabb');
+  }, 600);
+  setTimeout(async () => {
+    assert.equal(onHeader.mock.calls.length, 1);
+    assert.equal(onStartLine.mock.calls.length, 1);
+    const ret = await decode(Buffer.from('ccccasdfw'));
+    assert.equal(ret.body.toString(), 'aabbcccc');
+    assert.equal(ret.dataBuf.toString(), 'asdfw');
+  }, 1200);
+  const ret = await decode(Buffer.from('GET / HTTP/1.1\r\nContent-Length: 8\r\n\r\n'));
+  assert(!ret.complete);
+  assert.deepEqual(ret.headers, { 'content-length': 8 });
+  assert.equal(ret.body.toString(), 'aabb');
 });
