@@ -836,10 +836,12 @@ test('decodeHttp > decodeHttpRequest content-length onEnd', async () => {
 });
 
 test('decodeHttp > decodeHttpRequest pending', async () => {
-  const onHeader = mock.fn(async () => {
+  const onStartLine = mock.fn(async (state) => {
+    assert.deepEqual(state.headers, {});
     await waitFor(500);
   });
-  const onStartLine = mock.fn(async () => {
+  const onHeader = mock.fn(async (state) => {
+    assert.deepEqual(state.headers, { 'content-length': 8 });
     await waitFor(500);
   });
   const decode = decodeHttpRequest({
