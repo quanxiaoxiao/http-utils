@@ -55,6 +55,70 @@ const decodeHttp = ({
   const isHeaderPraseComplete = () => state.step >= 2;
   const isBodyParseComplete = () => state.step >= 3;
 
+  const getState = () => {
+    const result = {
+      httpVersion: state.httpVersion,
+      headers: state.headers,
+      headersRaw: state.headersRaw,
+      body: state.bodyBuf,
+      bytes: state.bytes,
+      count: state.count,
+      complete: isBodyParseComplete(),
+      dataBuf: state.dataBuf,
+      timeOnStartline: null,
+      timeOnHeaders: null,
+      timeOnBody: null,
+      timeOnStartlineEnd: null,
+      timeOnHeadersStart: null,
+      timeOnBodyStart: null,
+      timeOnBodyEnd: null,
+    };
+
+    if (state.isRequest) {
+      result.method = state.method;
+      result.path = state.path;
+    } else {
+      result.statusCode = state.statusCode;
+      result.statusText = state.statusText;
+    }
+
+    if (state.timeOnStartlineStart != null) {
+      result.timeOnStartlineStart = state.timeOnStartlineStart - state.timeStart;
+    }
+
+    if (state.timeOnStartlineEnd != null) {
+      assert(state.timeOnStartlineStart != null);
+      result.timeOnStartline = state.timeOnStartlineEnd - state.timeOnStartlineStart;
+      result.timeOnStartlineEnd = state.timeOnStartlineEnd - state.timeStart;
+    }
+
+    if (state.timeOnHeadersStart != null) {
+      result.timeOnHeadersStart = state.timeOnHeadersStart - state.timeStart;
+    }
+
+    if (state.timeOnHeadersEnd != null) {
+      assert(state.timeOnHeadersStart != null);
+      result.timeOnHeaders = state.timeOnHeadersEnd - state.timeOnHeadersStart;
+      result.timeOnHeadersEnd = state.timeOnHeadersEnd - state.timeStart;
+    }
+
+    if (state.timeOnBodyStart != null) {
+      result.timeOnBodyStart = state.timeOnBodyStart - state.timeStart;
+    }
+
+    if (state.timeOnBodyEnd != null) {
+      assert(state.timeOnBodyStart != null);
+      result.timeOnBody = state.timeOnBodyEnd - state.timeOnBodyStart;
+      result.timeOnBodyEnd = state.timeOnBodyEnd - state.timeStart;
+    }
+
+    if (result.complete) {
+      assert(result.timeOnBodyEnd != null);
+    }
+
+    return result;
+  };
+
   const parseStartLine = async () => {
     assert(state.step === 0);
     assert(state.timeOnStartlineEnd == null);
@@ -98,19 +162,7 @@ const decodeHttp = ({
     state.size -= (len + 2);
     state.timeOnStartlineEnd = performance.now();
     if (onStartLine) {
-      if (state.isRequest) {
-        await onStartLine({
-          path: state.path,
-          method: state.method,
-          httpVersion: state.httpVersion,
-        });
-      } else {
-        await onStartLine({
-          httpVersion: state.httpVersion,
-          statusCode: state.statusCode,
-          statusText: state.statusText,
-        });
-      }
+      await onStartLine(getState());
     }
     state.step += 1;
   };
@@ -182,10 +234,7 @@ const decodeHttp = ({
       }
       state.timeOnHeadersEnd = performance.now();
       if (onHeader) {
-        await onHeader({
-          headers: state.headers,
-          headersRaw: state.headersRaw,
-        });
+        await onHeader(getState());
       }
       state.step += 1;
     }
@@ -304,70 +353,6 @@ const decodeHttp = ({
       assert(!state.headers['transfer-encoding'] || Object.hasOwnProperty.call(state.headers, 'transfer-encoding').toLowerCase() !== 'chunked');
       await parseBodyWithContentLength();
     }
-  };
-
-  const getState = () => {
-    const result = {
-      httpVersion: state.httpVersion,
-      headers: state.headers,
-      headersRaw: state.headersRaw,
-      body: state.bodyBuf,
-      bytes: state.bytes,
-      count: state.count,
-      complete: isBodyParseComplete(),
-      dataBuf: state.dataBuf,
-      timeOnStartline: null,
-      timeOnHeaders: null,
-      timeOnBody: null,
-      timeOnStartlineEnd: null,
-      timeOnHeadersStart: null,
-      timeOnBodyStart: null,
-      timeOnBodyEnd: null,
-    };
-
-    if (state.isRequest) {
-      result.method = state.method;
-      result.path = state.path;
-    } else {
-      result.statusCode = state.statusCode;
-      result.statusText = state.statusText;
-    }
-
-    if (state.timeOnStartlineStart != null) {
-      result.timeOnStartlineStart = state.timeOnStartlineStart - state.timeStart;
-    }
-
-    if (state.timeOnStartlineEnd != null) {
-      assert(state.timeOnStartlineStart != null);
-      result.timeOnStartline = state.timeOnStartlineEnd - state.timeOnStartlineStart;
-      result.timeOnStartlineEnd = state.timeOnStartlineEnd - state.timeStart;
-    }
-
-    if (state.timeOnHeadersStart != null) {
-      result.timeOnHeadersStart = state.timeOnHeadersStart - state.timeStart;
-    }
-
-    if (state.timeOnHeadersEnd != null) {
-      assert(state.timeOnHeadersStart != null);
-      result.timeOnHeaders = state.timeOnHeadersEnd - state.timeOnHeadersStart;
-      result.timeOnHeadersEnd = state.timeOnHeadersEnd - state.timeStart;
-    }
-
-    if (state.timeOnBodyStart != null) {
-      result.timeOnBodyStart = state.timeOnBodyStart - state.timeStart;
-    }
-
-    if (state.timeOnBodyEnd != null) {
-      assert(state.timeOnBodyStart != null);
-      result.timeOnBody = state.timeOnBodyEnd - state.timeOnBodyStart;
-      result.timeOnBodyEnd = state.timeOnBodyEnd - state.timeStart;
-    }
-
-    if (result.complete) {
-      assert(result.timeOnBodyEnd != null);
-    }
-
-    return result;
   };
 
   const processes = [

@@ -97,6 +97,8 @@ test('decodeHttp > decodeHttpRequest startline 1', async () => {
   }
   const decode = decodeHttpRequest();
   let ret = await decode(Buffer.from('GET /'));
+  assert.equal(typeof ret.timeOnStartlineStart, 'number');
+  assert.equal(ret.timeOnStartlineEnd, null);
   assert(!ret.complete);
   assert.equal(ret.dataBuf.toString(), 'GET /');
   assert.equal(ret.method, null);
@@ -135,6 +137,24 @@ test('decodeHttp > decodeHttpRequest startline 3', async () => {
   assert.equal(ret.method, 'PUT');
   assert.equal(ret.path, '/');
   assert.equal(ret.httpVersion, '1.1');
+});
+
+test('decodeHttp > decodeHttpRequest onStartLine', async () => {
+  const onStartLine = mock.fn((state) => {
+    assert.equal(typeof state.timeOnStartlineStart, 'number');
+    assert.equal(typeof state.timeOnStartline, 'number');
+    assert.equal(typeof state.timeOnStartlineEnd, 'number');
+    assert.equal(state.method, 'PUT');
+    assert.equal(state.path, '/');
+    assert.equal(state.httpVersion, '1.1');
+  });
+  const decode = decodeHttpRequest({
+    onStartLine,
+  });
+  await decode(Buffer.from('put / HTTP/1.1'));
+  assert.equal(onStartLine.mock.calls.length, 0);
+  await decode(Buffer.from('\r\n'));
+  assert.equal(onStartLine.mock.calls.length, 1);
 });
 
 test('decodeHttp > decodeHttpRequest headers 1', async () => {
@@ -196,6 +216,26 @@ test('decodeHttp > decodeHttpRequest headers 2', async () => {
   assert.equal(ret.dataBuf.length, 0);
   assert(!ret.complete);
   assert.deepEqual(ret.headers, {});
+});
+
+test('decodeHttp > decodeHttpRequest onHeader', async () => {
+  const onHeader = mock.fn((state) => {
+    assert.deepEqual(state.headers, { 'content-length': 0, name: 'bbb' });
+    assert.equal(typeof state.timeOnHeadersStart, 'number');
+    assert.equal(typeof state.timeOnHeaders, 'number');
+    assert.equal(typeof state.timeOnHeadersEnd, 'number');
+  });
+  const decode = decodeHttpRequest({
+    onHeader,
+  });
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  assert.equal(onHeader.mock.calls.length, 0);
+  await decode(Buffer.from('name:'));
+  assert.equal(onHeader.mock.calls.length, 0);
+  await decode(Buffer.from('bbb\r\n'));
+  assert.equal(onHeader.mock.calls.length, 0);
+  await decode(Buffer.from('\r\n'));
+  assert.equal(onHeader.mock.calls.length, 1);
 });
 
 test('decodeHttp > decodeHttpRequest with headers content-length invalid', async () => {
