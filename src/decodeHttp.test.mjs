@@ -653,4 +653,30 @@ test('decodeHttp > decodeHttpRequest body content-length onBody 3', async () => 
   assert.equal(ret.body.toString(), '');
   assert.equal(ret.dataBuf.toString(), '');
   assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'ca');
+  assert.equal(ret.timeOnBody, null);
+  ret = await decode(Buffer.from('35eddd'));
+  assert(ret.complete);
+  assert.equal(onBody.mock.calls.length, 2);
+  assert.equal(onBody.mock.calls[1].arguments[0].toString(), '35');
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'eddd');
+  assert.equal(typeof ret.timeOnBody, 'number');
+});
+
+test('decodeHttp > decodeHttpRequest body content-length onBody 4', async () => {
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onBody,
+  });
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('Content-Length: 4\r\n\r\n'));
+  ret = await decode(Buffer.from('ca'));
+  assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'ca');
+  ret = await decode(Buffer.from('45'));
+  assert(ret.complete);
+  assert.equal(onBody.mock.calls.length, 2);
+  assert.equal(onBody.mock.calls[1].arguments[0].toString(), '45');
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(typeof ret.timeOnBody, 'number');
 });
