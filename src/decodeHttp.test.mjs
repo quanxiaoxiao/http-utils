@@ -794,3 +794,42 @@ test('decodeHttp > decodeHttpRequest body chunked onBody 1', async () => {
   assert.equal(ret.body.toString(), '');
   assert.equal(ret.dataBuf.toString(), '22ccss');
 });
+
+test('decodeHttp > decodeHttpRequest body chunked onEnd', async () => {
+  const onEnd = mock.fn((state) => {
+    assert(state.complete);
+    assert.equal(typeof state.timeOnBodyStart, 'number');
+    assert.equal(typeof state.timeOnBodyEnd, 'number');
+    assert.equal(state.body.toString(), 'aabbb');
+  });
+  const decode = decodeHttpRequest({
+    onEnd,
+  });
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  await decode(Buffer.from('Transfer-Encoding: chunked\r\n\r\n5\r\naa'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  await decode(Buffer.from('bbb\r\n'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  await decode(Buffer.from('0\r\n'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  await decode(Buffer.from('\r\n'));
+  assert.equal(onEnd.mock.calls.length, 1);
+});
+
+test('decodeHttp > decodeHttpRequest content-length onEnd', async () => {
+  const onEnd = mock.fn((state) => {
+    assert(state.complete);
+    assert.equal(typeof state.timeOnBodyStart, 'number');
+    assert.equal(typeof state.timeOnBodyEnd, 'number');
+    assert.equal(state.body.toString(), 'bbaaaaaa');
+  });
+  const decode = decodeHttpRequest({
+    onEnd,
+  });
+  await decode(Buffer.from('GET / HTTP/1.1\r\nContent-Length: 8\r\n\r\n'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  await decode(Buffer.from('bb'));
+  assert.equal(onEnd.mock.calls.length, 0);
+  await decode(Buffer.from('aaaaaa'));
+  assert.equal(onEnd.mock.calls.length, 1);
+});
