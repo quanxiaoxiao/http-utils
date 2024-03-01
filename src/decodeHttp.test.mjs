@@ -606,6 +606,47 @@ test('decodeHttp > decodeHttpRequest body with chunked 2', async () => {
   assert.equal(ret.dataBuf.toString(), '');
 });
 
+test('decodeHttp > decodeHttpRequest body with chunked 3', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('Transfer-encoding: chunked\r\n\r\n5\r\nabc'));
+  assert(!ret.complete);
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'abc');
+  ret = await decode(Buffer.from('11'));
+  assert(!ret.complete);
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'abc11');
+  ret = await decode(Buffer.from('\r\n'));
+  assert.equal(ret.body.toString(), 'abc11');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert(!ret.complete);
+  ret = await decode(Buffer.from('6\r'));
+  assert.equal(ret.dataBuf.toString(), '6\r');
+  assert.equal(ret.body.toString(), 'abc11');
+  ret = await decode(Buffer.from('\n'));
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(ret.body.toString(), 'abc11');
+  assert(!ret.complete);
+  assert.equal(ret.timeOnBody, null);
+  ret = await decode(Buffer.from('123456\r\n'));
+  assert(!ret.complete);
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(ret.body.toString(), 'abc11123456');
+  ret = await decode(Buffer.from('0\r\n'));
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(ret.body.toString(), 'abc11123456');
+  assert(!ret.complete);
+  ret = await decode(Buffer.from('\r'));
+  assert(!ret.complete);
+  assert.equal(ret.dataBuf.toString(), '\r');
+  ret = await decode(Buffer.from('\nabasdw'));
+  assert(ret.complete);
+  assert.equal(ret.body.toString(), 'abc11123456');
+  assert.equal(ret.dataBuf.toString(), 'abasdw');
+  assert.equal(typeof ret.timeOnBody, 'number');
+});
+
 test('decodeHttp > decodeHttpRequest body content-length onBody 1', async () => {
   const onBody = mock.fn(() => {});
   const decode = decodeHttpRequest({
@@ -679,4 +720,37 @@ test('decodeHttp > decodeHttpRequest body content-length onBody 4', async () => 
   assert.equal(ret.body.toString(), '');
   assert.equal(ret.dataBuf.toString(), '');
   assert.equal(typeof ret.timeOnBody, 'number');
+});
+
+test('decodeHttp > decodeHttpRequest body chunked onBody 1', async () => {
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onBody,
+  });
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  let ret = await decode(Buffer.from('Transfer-Encoding: chunked\r\n\r\n5\r\naa'));
+  assert(!ret.complete);
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.timeOnBody, null);
+  assert.equal(onBody.mock.calls.length, 0);
+  ret = await decode(Buffer.from('b'));
+  assert(!ret.complete);
+  assert.equal(ret.timeOnBody, null);
+  assert.equal(onBody.mock.calls.length, 0);
+  ret = await decode(Buffer.from('1'));
+  assert.equal(ret.body.toString(), '');
+  assert.equal(onBody.mock.calls.length, 0);
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), 'aab1');
+  ret = await decode(Buffer.from('1\r\n'));
+  assert.equal(onBody.mock.calls.length, 1);
+  assert.equal(ret.timeOnBody, null);
+  assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'aab11');
+  assert.equal(ret.dataBuf.toString(), '');
+  assert.equal(ret.body.toString(), '');
+  ret = await decode(Buffer.from('0\r\n\r\n22ccss'));
+  assert.equal(typeof ret.timeOnBody, 'number');
+  assert.equal(onBody.mock.calls.length, 1);
+  assert.equal(ret.body.toString(), '');
+  assert.equal(ret.dataBuf.toString(), '22ccss');
 });

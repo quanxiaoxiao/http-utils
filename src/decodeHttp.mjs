@@ -236,6 +236,7 @@ const decodeHttp = ({
           state.bodyChunkSize = -1;
           state.dataBuf = state.dataBuf.slice(2);
           state.size = state.dataBuf.length;
+          state.timeOnBody = performance.now();
         } else {
           const chunk = state.dataBuf.slice(0, state.bodyChunkSize);
           state.bodyBuf = Buffer.concat([
