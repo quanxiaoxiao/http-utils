@@ -130,7 +130,7 @@ const decodeHttp = ({
       0,
       state.isRequest ? 400 : null,
       65535,
-      state.isRequest ? 'request' : 'response',
+      state.isRequest ? 'request startline' : 'response startline',
     );
     if (!chunk) {
       return;
@@ -183,7 +183,7 @@ const decodeHttp = ({
         0,
         state.isRequest ? 400 : null,
         65535,
-        state.isRequest ? 'request' : 'response',
+        state.isRequest ? 'request headers' : 'response headers',
       );
       if (!chunk) {
         return;
