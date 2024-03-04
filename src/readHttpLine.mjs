@@ -17,6 +17,7 @@ export default (
   start = 0,
   statusCode = null,
   max = MAX_LINE_SIZE,
+  name = null,
 ) => {
   assert(Buffer.isBuffer(buf));
   assert(start >= 0);
@@ -32,7 +33,7 @@ export default (
   assert(start <= len - 1);
 
   if (buf[start] === crlf[1]) {
-    throw new HttpParseError('parse fail', statusCode);
+    throw new HttpParseError(name ? `parse ${name} fail` : 'parse fail', statusCode);
   }
   if (len === 1) {
     return null;
@@ -44,7 +45,7 @@ export default (
     const b = buf[i];
     if (b === crlf[1]) {
       if (i === start || buf[i - 1] !== crlf[0]) {
-        throw new HttpParseError('parse fail', statusCode);
+        throw new HttpParseError(name ? `parse ${name} fail` : 'parse fail', statusCode);
       }
       index = i;
       break;
@@ -53,7 +54,10 @@ export default (
   }
   if (index === -1) {
     if (len - start >= max) {
-      throw new HttpParseError('chunk exceed max size', statusCode);
+      throw new HttpParseError(
+        name ? `parse ${name} fail, chunk exceed max size` : 'parse fail, chunk exceed max size',
+        statusCode,
+      );
     }
     return null;
   }

@@ -80,7 +80,7 @@ test('readHttpLine', () => {
         5,
       );
     },
-    (error) => error.statusCode === 400 && error.message === 'chunk exceed max size',
+    (error) => error.statusCode === 400 && error.message === 'parse fail, chunk exceed max size',
   );
 
   assert.equal(

@@ -129,6 +129,8 @@ const decodeHttp = ({
       state.dataBuf,
       0,
       state.isRequest ? 400 : null,
+      65535,
+      state.isRequest ? 'request' : 'response',
     );
     if (!chunk) {
       return;
@@ -179,7 +181,9 @@ const decodeHttp = ({
       const chunk = readHttpLine(
         state.dataBuf,
         0,
-        isRequest ? 400 : null,
+        state.isRequest ? 400 : null,
+        65535,
+        state.isRequest ? 'request' : 'response',
       );
       if (!chunk) {
         return;
