@@ -192,7 +192,7 @@ const decodeHttp = ({
       } else {
         const indexSplit = chunk.findIndex((b) => b === COLON_CHAR_CODE);
         if (indexSplit === -1) {
-          throw new HttpParserError('parse headers fail', state.isRequest ? 400 : null);
+          throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} headers fail`, state.isRequest ? 400 : null);
         }
         const headerKey = chunk.slice(0, indexSplit).toString().trim();
         const headerValue = chunk.slice(indexSplit + 1).toString().trim();
@@ -202,14 +202,14 @@ const decodeHttp = ({
           const headerName = headerKey.toLowerCase();
           if (headerName === 'content-length') {
             if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
-              throw new HttpParserError('parse headers fail', state.isRequest ? 400 : null);
+              throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} headers fail`, state.isRequest ? 400 : null);
             }
             const contentLength = parseInt(headerValue, 10);
             if (Number.isNaN(contentLength)
                 || `${contentLength}` !== headerValue
                 || contentLength < 0
             ) {
-              throw new HttpParserError('parse headers fail', state.isRequest ? 400 : null);
+              throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} headers fail`, state.isRequest ? 400 : null);
             }
             state.headers[headerName] = contentLength;
           } else if (Object.hasOwnProperty.call(state.headers, headerName)) {

@@ -166,7 +166,7 @@ test('decodeHttp > decodeHttpRequest headers 1', async () => {
     throw new Error('xxx');
   } catch (error) {
     assert.equal(error.statusCode, 400);
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
   }
   const decode = decodeHttpRequest();
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
@@ -246,7 +246,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: -1\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -255,7 +255,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: NaN\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -264,7 +264,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: -0\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -273,7 +273,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: 0.\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -282,7 +282,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: 0.8\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -291,7 +291,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: .8\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -300,7 +300,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: 8.\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -309,7 +309,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: 08\r\n'));
     throw new Error();
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
   try {
@@ -319,7 +319,7 @@ test('decodeHttp > decodeHttpRequest with headers content-length invalid', async
     await decode(Buffer.from('Content-Length: 77\r\n'));
     throw new Error('xxx');
   } catch (error) {
-    assert.equal(error.message, 'parse headers fail');
+    assert.equal(error.message, 'parse request headers fail');
     assert.equal(error.statusCode, 400);
   }
 });
