@@ -136,7 +136,7 @@ const decodeHttp = ({
     const len = chunk.length;
     const matches = chunk.toString().match(state.isRequest ? REQUEST_STARTLINE_REG : RESPONSE_STARTLINE_REG);
     if (!matches) {
-      throw new HttpParserError('parse start line fail', state.isRequest ? 400 : null);
+      throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} start line fail`, state.isRequest ? 400 : null);
     }
     if (state.isRequest) {
       state.method = matches[1].toUpperCase();
@@ -145,7 +145,7 @@ const decodeHttp = ({
     } else {
       if (matches[3]) {
         if (matches[3][0] !== ' ') {
-          throw new HttpParserError('parse start line fail');
+          throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} start line fail`);
         }
         const statusText = matches[3].trim();
         if (statusText !== '') {
@@ -155,7 +155,7 @@ const decodeHttp = ({
       state.httpVersion = matches[1];
       state.statusCode = parseInt(matches[2], 10);
       if (Number.isNaN(state.statusCode) || `${state.statusCode}` !== matches[2]) {
-        throw new HttpParserError('parse start line fail');
+        throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} start line fail`);
       }
     }
     state.dataBuf = state.dataBuf.slice(len + 2);

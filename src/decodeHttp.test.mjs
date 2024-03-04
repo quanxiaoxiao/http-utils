@@ -41,7 +41,7 @@ test('decodeHttp > decodeHttpRequest decodeHttpResponse 1', async () => {
     throw new Error('xxxx');
   } catch (error) {
     assert(error.statusCode == null);
-    assert.equal(error.message, 'parse start line fail');
+    assert.equal(error.message, 'parse response start line fail');
   }
   try {
     const decode = decodeHttpResponse();
@@ -49,7 +49,7 @@ test('decodeHttp > decodeHttpRequest decodeHttpResponse 1', async () => {
     throw new Error('xxxx');
   } catch (error) {
     assert(error.statusCode == null);
-    assert.equal(error.message, 'parse start line fail');
+    assert.equal(error.message, 'parse response start line fail');
   }
   try {
     const decode = decodeHttpResponse();
@@ -57,7 +57,7 @@ test('decodeHttp > decodeHttpRequest decodeHttpResponse 1', async () => {
     throw new Error('xxxx');
   } catch (error) {
     assert(error.statusCode == null);
-    assert.equal(error.message, 'parse start line fail');
+    assert.equal(error.message, 'parse response start line fail');
   }
   let decode = decodeHttpResponse();
   let ret = await decode(Buffer.from('HTTP/1.1 200 OK\r\n'));
@@ -79,7 +79,7 @@ test('decodeHttp > decodeHttpRequest startline 1', async () => {
     throw new Error('xxx');
   } catch (error) {
     assert.equal(error.statusCode, 400);
-    assert.equal(error.message, 'parse start line fail');
+    assert.equal(error.message, 'parse request start line fail');
   }
   try {
     const decode = decodeHttpRequest();
@@ -87,7 +87,7 @@ test('decodeHttp > decodeHttpRequest startline 1', async () => {
     throw new Error('xxx');
   } catch (error) {
     assert.equal(error.statusCode, 400);
-    assert.equal(error.message, 'parse start line fail');
+    assert.equal(error.message, 'parse request start line fail');
   }
   try {
     const decode = decodeHttpRequest();
