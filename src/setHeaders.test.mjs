@@ -26,4 +26,14 @@ test('setHeaders', () => {
     setHeaders(['Content-Type', 'text/html'], { 'content-type': 'application/json' }),
     ['content-type', 'application/json'],
   );
+  assert.deepEqual(
+    setHeaders(['Date', 'Tue, 31 Oct 2023 08:38:15 GMT'], {}),
+    ['Date', 'Tue, 31 Oct 2023 08:38:15 GMT'],
+  );
+  assert.deepEqual(
+    setHeaders([], {
+      Date: 'Tue, 31 Oct 2023 08:38:15 GMT',
+    }),
+    ['Date', 'Tue, 31 Oct 2023 08:38:15 GMT'],
+  );
 });
