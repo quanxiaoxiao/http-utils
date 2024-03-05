@@ -20,4 +20,6 @@ test('getValue', () => {
   assert.equal(getValue(['age', '33', 'nAme', 'quan'], 'NAME'), 'quan');
   assert.equal(getValue(['age', '33', 'nAme', '%E4%BD%A0%E5%A5%BD'], 'NAME'), '你好');
   assert.deepEqual(getValue(['age', '33', 'nAme', '%E4%BD%A0%E5%A5%BD', 'name', 'bbb'], 'NAME'), ['你好', 'bbb']);
+  assert.deepEqual(getValue(['Host', 'www.test.com'], 'host'), 'www.test.com');
+  assert.deepEqual(getValue(['host', 'www.test.com'], 'host'), 'www.test.com');
 });

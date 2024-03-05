@@ -21,11 +21,11 @@ export default (obj) => {
       if (Array.isArray(value)) {
         for (let j = 0; j < value.length; j++) {
           result.push(key);
-          result.push(encodeURIComponent(toString(value[j])));
+          result.push(encodeURI(toString(value[j])));
         }
       } else {
         result.push(key);
-        result.push(encodeURIComponent(toString(value)));
+        result.push(encodeURI(toString(value)));
       }
     }
   }

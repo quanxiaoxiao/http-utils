@@ -140,7 +140,7 @@ test('decodeHttp > decodeHttpRequest startline 3', async () => {
   assert.equal(ret.httpVersion, '1.1');
 });
 
-test('decodeHttp > decodeHttpRequest onStartLine', async () => {
+test('decodeHttp > decodeHttpRequest onStartLine 1', async () => {
   const onStartLine = mock.fn((state) => {
     assert.equal(typeof state.timeOnStartlineStart, 'number');
     assert.equal(typeof state.timeOnStartline, 'number');
@@ -155,6 +155,24 @@ test('decodeHttp > decodeHttpRequest onStartLine', async () => {
   await decode(Buffer.from('put / HTTP/1.1'));
   assert.equal(onStartLine.mock.calls.length, 0);
   await decode(Buffer.from('\r\n'));
+  assert.equal(onStartLine.mock.calls.length, 1);
+});
+
+test('decodeHttp > decodeHttpRequest onStartLine 2', async () => {
+  const onStartLine = mock.fn((state) => {
+    assert.equal(typeof state.timeOnStartlineStart, 'number');
+    assert.equal(typeof state.timeOnStartline, 'number');
+    assert.equal(typeof state.timeOnStartlineEnd, 'number');
+    assert.equal(state.method, 'GET');
+    assert.equal(state.path, '/quan?name=aaa');
+    assert.equal(state.httpVersion, '1.1');
+  });
+  const decode = decodeHttpRequest({
+    onStartLine,
+  });
+  await decode(Buffer.from('GET /quan?name=aaa HTTP/1.1'));
+  assert.equal(onStartLine.mock.calls.length, 0);
+  await decode(Buffer.from('\r\nUser-Agent: quan\r\nContent-Length: 4\r\n'));
   assert.equal(onStartLine.mock.calls.length, 1);
 });
 

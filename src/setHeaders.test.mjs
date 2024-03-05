@@ -22,4 +22,8 @@ test('setHeaders', () => {
   assert.deepEqual(setHeaders(['foo', 'bar', 'Name', 'cc'], { name: 'ee' }), ['foo', 'bar', 'name', 'ee']);
   assert.deepEqual(setHeaders(['foo', 'bar', 'name', 'cc'], { Name: 'ee' }), ['foo', 'bar', 'Name', 'ee']);
   assert.deepEqual(setHeaders(['foo', 'bar', 'Content-length', '66'], { 'content-length': 18 }), ['foo', 'bar', 'content-length', '18']);
+  assert.deepEqual(
+    setHeaders(['Content-Type', 'text/html'], { 'content-type': 'application/json' }),
+    ['content-type', 'application/json'],
+  );
 });
