@@ -2,14 +2,7 @@
 import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
 import readHttpLine from './readHttpLine.mjs';
-
-class HttpParserError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.message = message || 'HTTP Parser Error';
-    this.statusCode = statusCode || null;
-  }
-}
+import { HttpParserError } from './errors.mjs';
 
 const crlf = Buffer.from([0x0d, 0x0a]);
 const MAX_CHUNK_SIZE = 1024 * 1024 * 800;
