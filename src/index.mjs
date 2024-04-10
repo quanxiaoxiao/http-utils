@@ -9,7 +9,11 @@ import decodeContentToJSON from './decodeContentToJSON.mjs';
 import getCurrentDateName from './getCurrentDateName.mjs';
 import encodeHttp from './encodeHttp.mjs';
 import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
-import { HttpParserError } from './errors.mjs';
+import {
+  HttpParserError,
+  HttpUrlParseError,
+} from './errors.mjs';
+import parseHttpUrl from './parseHttpUrl.mjs';
 
 export {
   convertObjectToArray,
@@ -24,6 +28,8 @@ export {
   encodeHttp,
   decodeHttpRequest,
   decodeHttpResponse,
+  parseHttpUrl,
 
   HttpParserError,
+  HttpUrlParseError,
 };
