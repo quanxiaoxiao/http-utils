@@ -14,6 +14,7 @@ import {
   HttpUrlParseError,
 } from './errors.mjs';
 import parseHttpUrl from './parseHttpUrl.mjs';
+import parseHttpPath from './parseHttpPath.mjs';
 
 export {
   convertObjectToArray,
@@ -29,6 +30,7 @@ export {
   decodeHttpRequest,
   decodeHttpResponse,
   parseHttpUrl,
+  parseHttpPath,
 
   HttpParserError,
   HttpUrlParseError,
