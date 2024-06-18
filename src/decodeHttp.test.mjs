@@ -251,13 +251,15 @@ test('decodeHttp > decodeHttpRequest headers 2', async () => {
 
 test('decodeHttp > decodeHttpRequest onHeader', async () => {
   const onHeader = mock.fn((state) => {
-    assert.deepEqual(state.headers, { 'content-length': 0, name: 'bbb' });
+    assert.deepEqual(state.headers, { name: 'bbb' });
     assert.equal(typeof state.timeOnHeadersStart, 'number');
     assert.equal(typeof state.timeOnHeaders, 'number');
     assert.equal(typeof state.timeOnHeadersEnd, 'number');
   });
+  const onBody = mock.fn(() => {});
   const decode = decodeHttpRequest({
     onHeader,
+    onBody,
   });
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
   assert.equal(onHeader.mock.calls.length, 0);
@@ -267,6 +269,11 @@ test('decodeHttp > decodeHttpRequest onHeader', async () => {
   assert.equal(onHeader.mock.calls.length, 0);
   await decode(Buffer.from('\r\n'));
   assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(onBody.mock.calls.length, 0);
+  await decode(Buffer.from('aaaa'));
+  assert.equal(onBody.mock.calls.length, 1);
+  await decode(Buffer.from('bbb'));
+  assert.equal(onBody.mock.calls.length, 2);
 });
 
 test('decodeHttp > decodeHttpRequest with headers content-length invalid', async () => {
@@ -391,28 +398,56 @@ test('decodeHttp > decodeHttpRequest headers multile header key', async () => {
   assert.deepEqual(ret.headersRaw, ['name', 'aaa', 'name', 'bbb', 'server', 'quan']);
 });
 
+test('decodeHttp > decodeHttpRequest with stream', async () => {
+  const handleData = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onHeader: (ret) => {
+      ret.body.on('data', handleData);
+    },
+  });
+  await decode(Buffer.from('GET / HTTP/1.1\r\n\r\naaaa'));
+  await decode(Buffer.from('ccc'));
+  await waitFor(1000);
+  assert.equal(handleData.mock.calls.length, 2);
+  assert.equal(handleData.mock.calls[0].arguments[0].toString(), 'aaaa');
+  assert.equal(handleData.mock.calls[1].arguments[0].toString(), 'ccc');
+});
+
 test('decodeHttp > decodeHttpRequest headers set default content-length 1', async () => {
-  const decode = decodeHttpRequest();
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onBody,
+  });
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
   let ret = await decode(Buffer.from('\r'));
   assert.deepEqual(ret.headers, {});
   ret = await decode(Buffer.from('\n'));
-  assert.deepEqual(ret.headers, { 'content-length': 0 });
+  assert.deepEqual(ret.headers, {});
   assert.deepEqual(ret.headersRaw, []);
-  assert(ret.complete);
+  assert(!ret.complete);
+  assert.equal(onBody.mock.calls.length, 0);
 });
 
 test('decodeHttp > decodeHttpRequest headers set default content-length 2', async () => {
-  const decode = decodeHttpRequest();
+  const onBody = mock.fn((chunk) => {
+    assert.equal(chunk.toString(), '\r\n');
+  });
+  const decode = decodeHttpRequest({
+    onBody,
+  });
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
   let ret = await decode(Buffer.from('name  : aaa\r\n'));
   assert.deepEqual(ret.headers, { name: 'aaa' });
   assert.deepEqual(ret.headersRaw, ['name', 'aaa']);
   assert(!ret.complete);
   ret = await decode(Buffer.from('\r\n'));
-  assert.deepEqual(ret.headers, { 'content-length': 0, name: 'aaa' });
+  assert.deepEqual(ret.headers, { name: 'aaa' });
   assert.deepEqual(ret.headersRaw, ['name', 'aaa']);
-  assert(ret.complete);
+  assert(!ret.complete);
+  assert.equal(onBody.mock.calls.length, 0);
+  ret = await decode(Buffer.from('\r\n'));
+  assert(!ret.complete);
+  assert.equal(onBody.mock.calls.length, 1);
 });
 
 test('decodeHttp > decodeHttpRequest headers with transfer-encoding: chunked 1', async () => {
@@ -461,13 +496,17 @@ test('decodeHttp > decodeHttpRequest body with content-length 1', async () => {
 });
 
 test('decodeHttp > decodeHttpRequest body with content-length 2', async () => {
-  const decode = decodeHttpRequest();
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onBody,
+  });
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
-  const ret = await decode(Buffer.from('name: aaa\r\n\r\n'));
-  assert.equal(ret.body.toString(), '');
+  const ret = await decode(Buffer.from('name: aaa\r\n\r\n\r\n'));
   assert.equal(ret.dataBuf.toString(), '');
-  assert.equal(typeof ret.timeOnBody, 'number');
-  assert(ret.complete);
+  assert.equal(ret.timeOnBody, null);
+  assert(!ret.complete);
+  assert.equal(onBody.mock.calls.length, 1);
+  assert.equal(onBody.mock.calls[0].arguments[0].toString(), '\r\n');
 });
 
 test('decodeHttp > decodeHttpRequest body with content-length 3', async () => {
@@ -490,12 +529,17 @@ test('decodeHttp > decodeHttpRequest body with content-length 4', async () => {
 });
 
 test('decodeHttp > decodeHttpRequest body with content-length 5', async () => {
-  const decode = decodeHttpRequest();
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onBody,
+  });
   await decode(Buffer.from('GET / HTTP/1.1\r\n'));
   const ret = await decode(Buffer.from('name: aaa\r\n\r\naaabbb'));
-  assert.equal(ret.body.toString(), '');
-  assert.equal(ret.dataBuf.toString(), 'aaabbb');
-  assert(ret.complete);
+  assert.equal(ret.body, null);
+  assert.equal(ret.dataBuf.toString(), '');
+  assert(!ret.complete);
+  assert.equal(onBody.mock.calls.length, 1);
+  assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'aaabbb');
 });
 
 test('decodeHttp > decodeHttpRequest body with content-length 6', async () => {

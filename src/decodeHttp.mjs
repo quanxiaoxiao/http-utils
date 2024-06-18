@@ -1,6 +1,7 @@
 /* eslint prefer-destructuring: 0 */
 import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
+import { PassThrough } from 'node:stream';
 import { parseInteger } from '@quanxiaoxiao/utils';
 import readHttpLine from './readHttpLine.mjs';
 import { HttpParserError } from './errors.mjs';
@@ -36,12 +37,14 @@ const decodeHttp = ({
     timeOnBodyStart: null,
     timeOnBodyEnd: null,
     statusCode: null,
+    isStream: null,
     method: null,
     path: null,
     headers: {},
     headersRaw: [],
     size: 0,
     bodyChunkSize: 0,
+    body: null,
     dataBuf: Buffer.from([]),
     bodyBuf: Buffer.from([]),
   };
@@ -54,7 +57,7 @@ const decodeHttp = ({
       httpVersion: state.httpVersion,
       headers: state.headers,
       headersRaw: state.headersRaw,
-      body: state.bodyBuf,
+      body: state.isStream ? state.body : state.bodyBuf,
       bytes: state.bytes,
       count: state.count,
       complete: isBodyParseComplete(),
@@ -224,8 +227,14 @@ const decodeHttp = ({
         if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
           delete state.headers['content-length'];
         }
-      } else if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
-        state.headers['content-length'] = 0;
+      }
+      if (!Object.hasOwnProperty.call(state.headers, 'content-length')
+        && !state.headers['transfer-encoding']
+      ) {
+        state.isStream = true;
+        if (!onBody) {
+          state.body = new PassThrough();
+        }
       }
       state.timeOnHeadersEnd = performance.now();
       if (onHeader) {
@@ -340,7 +349,18 @@ const decodeHttp = ({
       state.timeOnBodyStart = performance.now();
     }
     assert(!isBodyParseComplete());
-    if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
+    if (state.isStream) {
+      if (state.size > 0) {
+        const buf = state.dataBuf;
+        state.dataBuf = Buffer.from([]);
+        state.size = 0;
+        if (onBody) {
+          await onBody(buf);
+        } else {
+          state.body.write(buf);
+        }
+      }
+    } else if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
       assert(state.headers['transfer-encoding']);
       assert(state.headers['transfer-encoding'].toLowerCase() === 'chunked');
       await parseBodyWithChunk();
