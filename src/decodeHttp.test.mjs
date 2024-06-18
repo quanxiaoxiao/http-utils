@@ -34,7 +34,19 @@ test('decodeHttp > decodeHttpRequest check input', async () => {
   }
 });
 
-test('decodeHttp > decodeHttpRequest decodeHttpResponse 1', async () => {
+test('decodeHttp > decodeHttpResponse startline', async () => {
+  let decode = decodeHttpResponse();
+  let ret = await decode(Buffer.from('HTTP/1.1 200\r\nContent-Length: 0\r\n\r\n'));
+  assert.equal(ret.statusText, null);
+  decode = decodeHttpResponse();
+  ret = await decode(Buffer.from('HTTP/1.1 200  \r\nContent-Length: 0\r\n\r\n'));
+  assert.equal(ret.statusText, null);
+  decode = decodeHttpResponse();
+  ret = await decode(Buffer.from('HTTP/1.1 200  Ok\r\nContent-Length: 0\r\n\r\n'));
+  assert.equal(ret.statusText, 'Ok');
+});
+
+test('decodeHttp > decodeHttpResponse 1', async () => {
   try {
     const decode = decodeHttpResponse();
     await decode(Buffer.from('GET / HTTP/1.1\r\n'));
