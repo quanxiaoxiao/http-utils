@@ -1,6 +1,7 @@
 /* eslint prefer-destructuring: 0 */
 import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
+import { parseInteger } from '@quanxiaoxiao/utils';
 import readHttpLine from './readHttpLine.mjs';
 import { HttpParserError } from './errors.mjs';
 
@@ -148,8 +149,8 @@ const decodeHttp = ({
         }
       }
       state.httpVersion = matches[1];
-      state.statusCode = parseInt(matches[2], 10);
-      if (Number.isNaN(state.statusCode) || `${state.statusCode}` !== matches[2]) {
+      state.statusCode = parseInteger(matches[2]);
+      if (state.statusCode == null) {
         throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} start line fail`);
       }
     }
@@ -201,11 +202,8 @@ const decodeHttp = ({
             if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
               throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} headers fail`, state.isRequest ? 400 : null);
             }
-            const contentLength = parseInt(headerValue, 10);
-            if (Number.isNaN(contentLength)
-                || `${contentLength}` !== headerValue
-                || contentLength < 0
-            ) {
+            const contentLength = parseInteger(headerValue);
+            if (contentLength == null || contentLength < 0) {
               throw new HttpParserError(`parse ${state.isRequest ? 'request' : 'response'} headers fail`, state.isRequest ? 400 : null);
             }
             state.headers[headerName] = contentLength;
@@ -381,7 +379,7 @@ const decodeHttp = ({
       const fn = processes[state.step];
       const current = state.step;
       state.pending = true;
-      await fn(); // eslint-disable-line
+      await fn();
       state.pending = false;
       if (current === state.step) {
         return getState();
