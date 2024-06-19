@@ -15,6 +15,7 @@ import {
 } from './errors.mjs';
 import parseHttpUrl from './parseHttpUrl.mjs';
 import parseHttpPath from './parseHttpPath.mjs';
+import hasHttpBodyContent from './hasHttpBodyContent.mjs';
 
 import isHttpStream from './isHttpStream.mjs';
 
@@ -33,6 +34,7 @@ export {
   decodeHttpResponse,
   parseHttpUrl,
   parseHttpPath,
+  hasHttpBodyContent,
   isHttpStream,
 
   HttpParserError,
