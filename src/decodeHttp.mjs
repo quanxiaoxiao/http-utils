@@ -5,6 +5,7 @@ import { PassThrough } from 'node:stream';
 import { parseInteger } from '@quanxiaoxiao/utils';
 import readHttpLine from './readHttpLine.mjs';
 import { HttpParserError } from './errors.mjs';
+import isHttpStream from './isHttpStream.mjs';
 
 const crlf = Buffer.from([0x0d, 0x0a]);
 const MAX_CHUNK_SIZE = 1024 * 1024 * 800;
@@ -37,7 +38,6 @@ const decodeHttp = ({
     timeOnBodyStart: null,
     timeOnBodyEnd: null,
     statusCode: null,
-    isStream: null,
     method: null,
     path: null,
     headers: {},
@@ -57,7 +57,7 @@ const decodeHttp = ({
       httpVersion: state.httpVersion,
       headers: state.headers,
       headersRaw: state.headersRaw,
-      body: state.isStream ? state.body : state.bodyBuf,
+      body: null,
       bytes: state.bytes,
       count: state.count,
       complete: isBodyParseComplete(),
@@ -70,6 +70,14 @@ const decodeHttp = ({
       timeOnBodyStart: null,
       timeOnBodyEnd: null,
     };
+
+    if (isHeaderPraseComplete()) {
+      if (isHttpStream(state.headers)) {
+        result.body = state.body;
+      } else {
+        result.body = state.bodyBuf;
+      }
+    }
 
     if (state.isRequest) {
       result.method = state.method;
@@ -160,10 +168,10 @@ const decodeHttp = ({
     state.dataBuf = state.dataBuf.slice(len + 2);
     state.size -= (len + 2);
     state.timeOnStartlineEnd = performance.now();
+    state.step += 1;
     if (onStartLine) {
       await onStartLine(getState());
     }
-    state.step += 1;
   };
 
   const parseHeaders = async () => {
@@ -228,19 +236,14 @@ const decodeHttp = ({
           delete state.headers['content-length'];
         }
       }
-      if (!Object.hasOwnProperty.call(state.headers, 'content-length')
-        && !state.headers['transfer-encoding']
-      ) {
-        state.isStream = true;
-        if (!onBody) {
-          state.body = new PassThrough();
-        }
+      if (isHttpStream(state.headers)) {
+        state.body = new PassThrough();
       }
       state.timeOnHeadersEnd = performance.now();
+      state.step += 1;
       if (onHeader) {
         await onHeader(getState());
       }
-      state.step += 1;
     }
   };
 
@@ -349,16 +352,15 @@ const decodeHttp = ({
       state.timeOnBodyStart = performance.now();
     }
     assert(!isBodyParseComplete());
-    if (state.isStream) {
+    if (isHttpStream(state.headers)) {
       if (state.size > 0) {
         const buf = state.dataBuf;
         state.dataBuf = Buffer.from([]);
         state.size = 0;
         if (onBody) {
           await onBody(buf);
-        } else {
-          state.body.write(buf);
         }
+        state.body.write(buf);
       }
     } else if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
       assert(state.headers['transfer-encoding']);

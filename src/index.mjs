@@ -16,6 +16,8 @@ import {
 import parseHttpUrl from './parseHttpUrl.mjs';
 import parseHttpPath from './parseHttpPath.mjs';
 
+import isHttpStream from './isHttpStream.mjs';
+
 export {
   convertObjectToArray,
   convertArrayToObject,
@@ -31,6 +33,7 @@ export {
   decodeHttpResponse,
   parseHttpUrl,
   parseHttpPath,
+  isHttpStream,
 
   HttpParserError,
   HttpUrlParseError,
