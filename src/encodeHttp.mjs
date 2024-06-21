@@ -111,34 +111,35 @@ export default (options) => {
 
     if (isChunkEmpty(chunk)) {
       state.complete = true;
-      if (state.contentChunkLength === 0) {
-        if (options.onHeader) {
-          if (isBodyStream(options)) {
-            if (options.onEnd) {
-              options.onEnd(state.contentChunkLength);
-            }
-            return BODY_CHUNK_END;
-          }
-          options.onHeader(Buffer.concat([
-            ...options.onStartLine ? [] : [startlineBuf, crlf],
-            encodeHttpHeaders(keyValuePairList),
-          ]));
-        }
+      if (state.contentChunkLength > 0) {
         if (options.onEnd) {
           options.onEnd(state.contentChunkLength);
         }
-        return Buffer.concat([
-          startlineBuf,
-          crlf,
+
+        return BODY_CHUNK_END;
+      }
+      if (options.onHeader) {
+        if (isBodyStream(options)) {
+          if (options.onEnd) {
+            options.onEnd(state.contentChunkLength);
+          }
+          return BODY_CHUNK_END;
+        }
+        options.onHeader(Buffer.concat([
+          ...options.onStartLine ? [] : [startlineBuf, crlf],
           encodeHttpHeaders(keyValuePairList),
-          crlf,
-          ...isBodyStream(options) ? [BODY_CHUNK_END] : [],
-        ]);
+        ]));
       }
       if (options.onEnd) {
         options.onEnd(state.contentChunkLength);
       }
-      return BODY_CHUNK_END;
+      return Buffer.concat([
+        startlineBuf,
+        crlf,
+        encodeHttpHeaders(keyValuePairList),
+        crlf,
+        ...isBodyStream(options) ? [BODY_CHUNK_END] : [],
+      ]);
     }
 
     const chunkSize = chunk.length;
