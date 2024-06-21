@@ -23,5 +23,5 @@ export default (options) => {
     }
   }
 
-  return Buffer.from(result.join(' '));
+  return Buffer.from(`${result.join(' ')}\r\n`);
 };

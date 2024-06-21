@@ -14,5 +14,6 @@ export default (arr) => {
     result.push(crlf);
     i += 2;
   }
+  result.push(crlf);
   return Buffer.concat(result);
 };
