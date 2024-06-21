@@ -8,6 +8,7 @@ import filterHeaders from './filterHeaders.mjs';
 import encodeHttpHeaders from './encodeHttpHeaders.mjs';
 import wrapContentChunk from './wrapContentChunk.mjs';
 import encodeHttpStartLine from './encodeHttpStartLine.mjs';
+import getValue from './getValue.mjs';
 
 const crlf = Buffer.from('\r\n');
 const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
@@ -24,7 +25,7 @@ const isChunkEmpty = (chunk) => {
 export default (options) => {
   const state = {
     complete: false,
-    contentSize: 0,
+    contentChunkLength: 0,
     contentLength: null,
   };
 
@@ -53,21 +54,28 @@ export default (options) => {
     options.onStartLine(startlineBuf);
   }
 
-  if (isBodyStream(options)) {
-    keyValuePairList.push('Transfer-Encoding');
-    keyValuePairList.push('chunked');
-  } else if (hasBody) {
-    keyValuePairList.push('Content-Length');
-    if (options.body == null) {
-      state.contentLength = 0;
-      keyValuePairList.push(0);
-    } else {
-      state.contentLength = Buffer.byteLength(options.body);
-      keyValuePairList.push(state.contentLength);
-    }
+  const contentLength = getValue(httpHeaderList, 'content-length');
+  if (contentLength != null) {
+    const len = parseInt(contentLength, 10);
+    assert(len >= 0);
+    state.contentLength = len;
   }
 
   if (hasBody) {
+    if (isBodyStream(options)) {
+      keyValuePairList.push('Transfer-Encoding');
+      keyValuePairList.push('chunked');
+    } else {
+      keyValuePairList.push('Content-Length');
+      if (options.body == null) {
+        state.contentLength = 0;
+        keyValuePairList.push(0);
+      } else {
+        state.contentLength = Buffer.byteLength(options.body);
+        keyValuePairList.push(state.contentLength);
+      }
+    }
+
     const headersBuf = encodeHttpHeaders(keyValuePairList);
     if (options.onHeader) {
       options.onHeader(Buffer.concat([
@@ -89,6 +97,8 @@ export default (options) => {
 
       return Buffer.concat(bufList);
     }
+  } else if (state.contentLength != null) {
+    // console.log('-----------', state.contentLength);
   }
 
   return (data) => {
@@ -101,11 +111,11 @@ export default (options) => {
 
     if (isChunkEmpty(chunk)) {
       state.complete = true;
-      if (state.contentSize === 0) {
+      if (state.contentChunkLength === 0) {
         if (options.onHeader) {
           if (isBodyStream(options)) {
             if (options.onEnd) {
-              options.onEnd(state.contentSize);
+              options.onEnd(state.contentChunkLength);
             }
             return BODY_CHUNK_END;
           }
@@ -115,7 +125,7 @@ export default (options) => {
           ]));
         }
         if (options.onEnd) {
-          options.onEnd(state.contentSize);
+          options.onEnd(state.contentChunkLength);
         }
         return Buffer.concat([
           startlineBuf,
@@ -126,14 +136,14 @@ export default (options) => {
         ]);
       }
       if (options.onEnd) {
-        options.onEnd(state.contentSize);
+        options.onEnd(state.contentChunkLength);
       }
       return BODY_CHUNK_END;
     }
 
     const chunkSize = chunk.length;
-    if (state.contentSize === 0) {
-      state.contentSize = chunkSize;
+    if (state.contentChunkLength === 0) {
+      state.contentChunkLength = chunkSize;
       if (isBodyStream(options)) {
         if (!options.onHeader) {
           return Buffer.concat([
@@ -162,7 +172,7 @@ export default (options) => {
         wrapContentChunk(chunk),
       ]);
     }
-    state.contentSize += chunkSize;
+    state.contentChunkLength += chunkSize;
     return wrapContentChunk(chunk);
   };
 };
