@@ -1,114 +1,47 @@
 /* eslint no-nested-ternary: 0 */
 import { Buffer } from 'node:buffer';
-import http from 'node:http';
 import assert from 'node:assert';
+import { Readable } from 'node:stream';
 import _ from 'lodash';
 import convertObjectToArray from './convertObjectToArray.mjs';
 import filterHeaders from './filterHeaders.mjs';
+import encodeHttpHeaders from './encodeHttpHeaders.mjs';
+import wrapContentChunk from './wrapContentChunk.mjs';
+import encodeHttpStartLine from './encodeHttpStartLine.mjs';
 
 const crlf = Buffer.from('\r\n');
-const HTTP_VERSION = '1.1';
 const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
-const MAX_CHUNK_SIZE = 65535;
-
-const encodeHeaders = (arr) => {
-  const result = [];
-  const len = arr.length;
-  assert(len % 2 === 0);
-  for (let i = 0; i < len;) {
-    const key = arr[i];
-    const value = arr[i + 1];
-    result.push(Buffer.from(`${key}: ${value == null ? '' : value}`));
-    result.push(crlf);
-    i += 2;
-  }
-  return Buffer.concat(result);
-};
-
-const wrapChunk = (chunk) => {
-  const size = chunk.length;
-  if (size > MAX_CHUNK_SIZE) {
-    const n = Math.floor(size / MAX_CHUNK_SIZE);
-    const remain = size - n * MAX_CHUNK_SIZE;
-    const result = [];
-    for (let i = 0; i < n; i++) {
-      result.push(Buffer.from('ffff\r\n'));
-      result.push(chunk.slice(i * MAX_CHUNK_SIZE, (i + 1) * MAX_CHUNK_SIZE));
-      result.push(crlf);
-    }
-    if (remain !== 0) {
-      result.push(Buffer.from(`${remain.toString(16)}\r\n`));
-      result.push(chunk.slice(n * MAX_CHUNK_SIZE));
-      result.push(crlf);
-    }
-    return Buffer.concat(result);
-  }
-  return Buffer.concat([
-    Buffer.from(`${size.toString(16)}\r\n`),
-    chunk,
-    crlf,
-  ]);
-};
 
 export default (options) => {
-  const {
-    httpVersion,
-    headers,
-    body,
-    onStartLine,
-    onHeader,
-    onEnd,
-  } = options;
-
   const state = {
     complete: false,
     contentSize: 0,
   };
 
-  if (headers) {
-    assert(Array.isArray(headers) || _.isPlainObject(headers));
+  if (options.headers) {
+    assert(Array.isArray(options.headers) || _.isPlainObject(options.headers));
   }
 
-  const httpHeaders = Array.isArray(headers) ? headers : convertObjectToArray(headers || {});
+  const httpHeaderList = Array.isArray(options.headers) ? options.headers : convertObjectToArray(options.headers || {});
 
-  assert(httpHeaders.length % 2 === 0);
+  assert(httpHeaderList.length % 2 === 0);
 
   const hasBody = Object.hasOwnProperty.call(options, 'body');
-  const isBodyStream = options.body && (typeof options.body.pipe === 'function');
+  const isBodyStream = options.body && (options.body instanceof Readable);
 
-  if (hasBody && !isBodyStream && body != null) {
-    assert(Buffer.isBuffer(body) || typeof body === 'string');
+  if (hasBody && !isBodyStream && options.body != null) {
+    assert(Buffer.isBuffer(options.body) || typeof options.body === 'string');
   }
 
   const keyValuePairList = filterHeaders(
-    httpHeaders,
+    httpHeaderList,
     ['content-length', 'transfer-encoding'],
   );
 
-  const startLines = [];
+  const startlineBuf = encodeHttpStartLine(options);
 
-  if (options.method) {
-    startLines.push(options.method.toUpperCase());
-    startLines.push(options.path || '/');
-    startLines.push(`HTTP/${httpVersion || HTTP_VERSION}`);
-  } else {
-    const code = options.statusCode == null ? 200 : options.statusCode;
-    assert(code >= 0 && code <= 999);
-    startLines.push(`HTTP/${httpVersion || HTTP_VERSION}`);
-    startLines.push(`${code}`);
-    if (!Object.hasOwnProperty.call(options, 'statusText')) {
-      if (http.STATUS_CODES[code]) {
-        startLines.push(http.STATUS_CODES[code]);
-      }
-    } else if (options.statusText != null) {
-      startLines.push(options.statusText);
-    }
-  }
-
-  const startlineBuf = Buffer.from(startLines.join(' '));
-
-  if (onStartLine) {
-    onStartLine(startlineBuf);
+  if (options.onStartLine) {
+    options.onStartLine(startlineBuf);
   }
 
   if (isBodyStream) {
@@ -116,20 +49,20 @@ export default (options) => {
     keyValuePairList.push('chunked');
   } else if (hasBody) {
     keyValuePairList.push('Content-Length');
-    if (body == null) {
+    if (options.body == null) {
       state.contentLength = 0;
       keyValuePairList.push(0);
     } else {
-      state.contentLength = Buffer.byteLength(body);
+      state.contentLength = Buffer.byteLength(options.body);
       keyValuePairList.push(state.contentLength);
     }
   }
 
   if (hasBody) {
-    const headersBuf = encodeHeaders(keyValuePairList);
-    if (onHeader) {
-      onHeader(Buffer.concat([
-        ...onStartLine ? [] : [startlineBuf, crlf],
+    const headersBuf = encodeHttpHeaders(keyValuePairList);
+    if (options.onHeader) {
+      options.onHeader(Buffer.concat([
+        ...options.onStartLine ? [] : [startlineBuf, crlf],
         headersBuf,
       ]));
     }
@@ -142,7 +75,7 @@ export default (options) => {
       ];
 
       if (state.contentLength > 0) {
-        bufList.push(Buffer.isBuffer(body) ? body : Buffer.from(body));
+        bufList.push(Buffer.isBuffer(options.body) ? options.body : Buffer.from(options.body));
       }
 
       return Buffer.concat(bufList);
@@ -159,31 +92,31 @@ export default (options) => {
     if (!chunk || chunk.length === 0) {
       state.complete = true;
       if (state.contentSize === 0) {
-        if (onHeader) {
+        if (options.onHeader) {
           if (isBodyStream) {
-            if (onEnd) {
-              onEnd(state.contentSize);
+            if (options.onEnd) {
+              options.onEnd(state.contentSize);
             }
             return BODY_CHUNK_END;
           }
-          onHeader(Buffer.concat([
-            ...onStartLine ? [] : [startlineBuf, crlf],
-            encodeHeaders(keyValuePairList),
+          options.onHeader(Buffer.concat([
+            ...options.onStartLine ? [] : [startlineBuf, crlf],
+            encodeHttpHeaders(keyValuePairList),
           ]));
         }
-        if (onEnd) {
-          onEnd(state.contentSize);
+        if (options.onEnd) {
+          options.onEnd(state.contentSize);
         }
         return Buffer.concat([
           startlineBuf,
           crlf,
-          encodeHeaders(keyValuePairList),
+          encodeHttpHeaders(keyValuePairList),
           crlf,
           ...isBodyStream ? [BODY_CHUNK_END] : [],
         ]);
       }
-      if (onEnd) {
-        onEnd(state.contentSize);
+      if (options.onEnd) {
+        options.onEnd(state.contentSize);
       }
       return BODY_CHUNK_END;
     }
@@ -192,34 +125,34 @@ export default (options) => {
     if (state.contentSize === 0) {
       state.contentSize = chunkSize;
       if (isBodyStream) {
-        if (!onHeader) {
+        if (!options.onHeader) {
           return Buffer.concat([
-            ...onStartLine ? [] : [startlineBuf, crlf],
-            encodeHeaders(keyValuePairList),
+            ...options.onStartLine ? [] : [startlineBuf, crlf],
+            encodeHttpHeaders(keyValuePairList),
             crlf,
-            wrapChunk(chunk),
+            wrapContentChunk(chunk),
           ]);
         }
-        return wrapChunk(chunk);
+        return wrapContentChunk(chunk);
       }
       keyValuePairList.push('Transfer-Encoding');
       keyValuePairList.push('chunked');
-      if (onHeader) {
-        const headersBuf = encodeHeaders(keyValuePairList);
-        onHeader(Buffer.concat([
-          ...onStartLine ? [] : [startlineBuf, crlf],
+      if (options.onHeader) {
+        const headersBuf = encodeHttpHeaders(keyValuePairList);
+        options.onHeader(Buffer.concat([
+          ...options.onStartLine ? [] : [startlineBuf, crlf],
           headersBuf,
         ]));
       }
       return Buffer.concat([
         startlineBuf,
         crlf,
-        encodeHeaders(keyValuePairList),
+        encodeHttpHeaders(keyValuePairList),
         crlf,
-        wrapChunk(chunk),
+        wrapContentChunk(chunk),
       ]);
     }
     state.contentSize += chunkSize;
-    return wrapChunk(chunk);
+    return wrapContentChunk(chunk);
   };
 };
