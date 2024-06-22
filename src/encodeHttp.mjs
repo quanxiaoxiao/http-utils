@@ -69,6 +69,93 @@ const handleWithContentBody = ({
   return Buffer.concat(bufList);
 };
 
+const handleWithContentLengthStream = ({
+  method,
+  path,
+  httpVersion,
+  contentLength,
+  statusCode,
+  statusText,
+  headers,
+  onHeader,
+  onStartLine,
+}) => {
+  assert(Number.isInteger(contentLength));
+  assert(contentLength >= 0);
+  const state = {
+    complete: false,
+    contentChunkLength: 0,
+  };
+  const keyValuePairList = [...headers];
+  keyValuePairList.push('Content-Length');
+  keyValuePairList.push(contentLength);
+  if (onHeader) {
+    onHeader(Buffer.concat([
+      ...onStartLine ? [] : [encodeHttpStartLine({
+        method,
+        path,
+        httpVersion,
+        statusCode,
+        statusText,
+      })],
+      encodeHttpHeaders(keyValuePairList),
+    ]));
+  }
+  if (contentLength === 0) {
+    return () => {
+      assert(!state.complete);
+      state.complete = true;
+      if (onHeader) {
+        return null;
+      }
+      return Buffer.concat([
+        ...onStartLine ? [] : [encodeHttpStartLine({
+          method,
+          path,
+          httpVersion,
+          statusCode,
+          statusText,
+        })],
+        encodeHttpHeaders(keyValuePairList),
+      ]);
+    };
+  }
+  return (data) => {
+    assert(!state.complete);
+    assert(Buffer.isBuffer(data) || typeof data === 'string');
+    const chunk = Buffer.from(data);
+    const chunkSize = chunk.length;
+    assert(chunkSize > 0);
+    assert(state.contentChunkLength + chunkSize <= contentLength);
+    if (state.contentChunkLength === 0) {
+      state.contentChunkLength += chunkSize;
+      if (state.contentChunkLength === contentLength) {
+        state.complete = true;
+      }
+      if (!onHeader) {
+        return Buffer.concat([
+          ...onStartLine ? [] : [encodeHttpStartLine({
+            method,
+            path,
+            httpVersion,
+            statusCode,
+            statusText,
+          })],
+          encodeHttpHeaders(keyValuePairList),
+          chunk,
+        ]);
+      }
+      return chunk;
+    }
+    state.contentChunkLength += chunkSize;
+    assert(state.contentChunkLength <= contentLength);
+    if (state.contentChunkLength === contentLength) {
+      state.complete = true;
+    }
+    return chunk;
+  };
+};
+
 export default (options) => {
   const state = {
     complete: false,
@@ -109,57 +196,18 @@ export default (options) => {
 
   const contentLength = getValue(httpHeaderList, 'content-length');
   if (contentLength != null) {
-    state.contentLength = parseInt(contentLength, 10);
-    assert(state.contentLength >= 0);
-    keyValuePairList.push('Content-Length');
-    keyValuePairList.push(state.contentLength);
-    if (options.onHeader) {
-      options.onHeader(Buffer.concat([
-        ...options.onStartLine ? [] : [encodeHttpStartLine(options)],
-        encodeHttpHeaders(keyValuePairList),
-      ]));
-    }
-    if (state.contentLength === 0) {
-      return () => {
-        assert(!state.complete);
-        state.complete = true;
-        if (options.onHeader) {
-          return null;
-        }
-        return Buffer.concat([
-          ...options.onStartLine ? [] : [encodeHttpStartLine(options)],
-          encodeHttpHeaders(keyValuePairList),
-        ]);
-      };
-    }
-    return (data) => {
-      assert(!state.complete);
-      assert(Buffer.isBuffer(data) || typeof data === 'string');
-      const chunk = Buffer.from(data);
-      const chunkSize = chunk.length;
-      assert(chunkSize > 0);
-      assert(state.contentChunkLength + chunkSize <= state.contentLength);
-      if (state.contentChunkLength === 0) {
-        state.contentChunkLength += chunkSize;
-        if (state.contentChunkLength === state.contentLength) {
-          state.complete = true;
-        }
-        if (!options.onHeader) {
-          return Buffer.concat([
-            ...options.onStartLine ? [] : [encodeHttpStartLine(options)],
-            encodeHttpHeaders(keyValuePairList),
-            chunk,
-          ]);
-        }
-        return chunk;
-      }
-      state.contentChunkLength += chunkSize;
-      assert(state.contentChunkLength <= state.contentLength);
-      if (state.contentChunkLength === state.contentLength) {
-        state.complete = true;
-      }
-      return chunk;
-    };
+    return handleWithContentLengthStream({
+      contentLength: Number(contentLength),
+      method: options.method,
+      path: options.path,
+      httpVersion: options.httpVersion,
+      statusCode: options.statusCode,
+      statusText: options.statusText,
+      headers: keyValuePairList,
+      body: options.body,
+      onHeader: options.onHeader,
+      onStartLine: options.onStartLine,
+    });
   }
 
   keyValuePairList.push('Transfer-Encoding');
