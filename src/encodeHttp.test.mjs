@@ -4,7 +4,7 @@ import http from 'node:http';
 import assert from 'node:assert';
 import encodeHttp from './encodeHttp.mjs';
 
-test('encodeHttp', { only: true }, () => {
+test('encodeHttp', () => {
   assert.equal(
     encodeHttp({ body: null }).toString(),
     'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n',
@@ -15,7 +15,7 @@ test('encodeHttp', { only: true }, () => {
   );
 });
 
-test('encodeHttp body invalid', { only: true }, () => {
+test('encodeHttp body invalid', () => {
   assert.throws(() => {
     encodeHttp({
       body: {},
@@ -36,7 +36,7 @@ test('encodeHttp body invalid', { only: true }, () => {
   }, (error) => error instanceof assert.AssertionError);
 });
 
-test('encodeHttp response with startline', { only: true }, () => {
+test('encodeHttp response with startline', () => {
   assert.throws(() => {
     encodeHttp({
       statusCode: 1001,
@@ -88,7 +88,7 @@ test('encodeHttp response with startline', { only: true }, () => {
   );
 });
 
-test('encodeHttp request with startline', { only: true }, () => {
+test('encodeHttp request with startline', () => {
   assert.equal(
     encodeHttp({
       method: 'GET',
@@ -131,7 +131,7 @@ test('encodeHttp request with startline', { only: true }, () => {
   );
 });
 
-test('encodeHttp with headers', { only: true }, () => {
+test('encodeHttp with headers', () => {
   assert.throws(() => {
     encodeHttp({
       body: null,
@@ -206,7 +206,7 @@ test('encodeHttp with headers', { only: true }, () => {
   );
 });
 
-test('encodeHttp with onStartLine 1', { only: true }, () => {
+test('encodeHttp with onStartLine 1', () => {
   const onStartLine = mock.fn((chunk) => {
     assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\n');
   });
@@ -217,7 +217,7 @@ test('encodeHttp with onStartLine 1', { only: true }, () => {
   assert.equal(onStartLine.mock.calls.length, 1);
 });
 
-test('encodeHttp with onStartLine 2', { only: true }, () => {
+test('encodeHttp with onStartLine 2', () => {
   const onStartLine = mock.fn((chunk) => {
     assert.equal(chunk.toString(), 'HTTP/1.0 204 no content\r\n');
   });
@@ -231,7 +231,7 @@ test('encodeHttp with onStartLine 2', { only: true }, () => {
   assert.equal(onStartLine.mock.calls.length, 1);
 });
 
-test('encodeHttp with onHeader 1', { only: true }, () => {
+test('encodeHttp with onHeader 1', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n');
   });
@@ -243,7 +243,7 @@ test('encodeHttp with onHeader 1', { only: true }, () => {
   assert.equal(ret, null);
 });
 
-test('encodeHttp with onHeader 2', { only: true }, () => {
+test('encodeHttp with onHeader 2', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\nname: quan\r\nContent-Length: 0\r\n\r\n');
   });
@@ -260,7 +260,7 @@ test('encodeHttp with onHeader 2', { only: true }, () => {
   assert.equal(ret, null);
 });
 
-test('encodeHttp with onHeader 3', { only: true }, () => {
+test('encodeHttp with onHeader 3', () => {
   const onStartLine = mock.fn((chunk) => {
     assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\n');
   });
@@ -277,7 +277,7 @@ test('encodeHttp with onHeader 3', { only: true }, () => {
   assert.equal(ret, null);
 });
 
-test('encodeHttp with onHeader 4', { only: true }, () => {
+test('encodeHttp with onHeader 4', () => {
   const onStartLine = mock.fn((chunk) => {
     assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\n');
   });
@@ -295,7 +295,7 @@ test('encodeHttp with onHeader 4', { only: true }, () => {
   assert.equal(chunk.toString(), 'abc');
 });
 
-test('encodeHttp with body 1', { only: true }, () => {
+test('encodeHttp with body 1', () => {
   assert.equal(
     encodeHttp({
       body: Buffer.from([]),
@@ -316,7 +316,7 @@ test('encodeHttp with body 1', { only: true }, () => {
   );
 });
 
-test('encodeHttp with body 2', { only: true }, () => {
+test('encodeHttp with body 2', () => {
   const onEnd = mock.fn(() => {});
   encodeHttp({
     onEnd,
@@ -335,7 +335,7 @@ test('encodeHttp with empty chunked 1', () => {
   });
 });
 
-test('encodeHttp content-length 1', { only: true }, () => {
+test('encodeHttp content-length 1', () => {
   const encode = encodeHttp({
     headers: {
       name: 'quan',
@@ -352,7 +352,7 @@ test('encodeHttp content-length 1', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length 2', { only: true }, () => {
+test('encodeHttp content-length 2', () => {
   const encode = encodeHttp({
     headers: {
       name: 'quan',
@@ -376,7 +376,7 @@ test('encodeHttp content-length 2', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length 3', { only: true }, () => {
+test('encodeHttp content-length 3', () => {
   const encode = encodeHttp({
     headers: {
       name: 'quan',
@@ -388,7 +388,7 @@ test('encodeHttp content-length 3', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length 4', { only: true }, () => {
+test('encodeHttp content-length 4', () => {
   const onStartLine = mock.fn(() => {});
   const encode = encodeHttp({
     headers: {
@@ -414,7 +414,7 @@ test('encodeHttp content-length 4', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length 5', { only: true }, () => {
+test('encodeHttp content-length 5', () => {
   const onStartLine = mock.fn(() => {});
   const encode = encodeHttp({
     headers: {
@@ -432,7 +432,7 @@ test('encodeHttp content-length 5', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length 6', { only: true }, () => {
+test('encodeHttp content-length 6', () => {
   const onHeader = mock.fn(() => {});
   const encode = encodeHttp({
     headers: {
@@ -451,7 +451,7 @@ test('encodeHttp content-length 6', { only: true }, () => {
   );
 });
 
-test('encodeHttp content-length 8', { only: true }, () => {
+test('encodeHttp content-length 8', () => {
   const onStartLine = mock.fn(() => {});
   const onHeader = mock.fn(() => {});
   const encode = encodeHttp({
@@ -476,7 +476,7 @@ test('encodeHttp content-length 8', { only: true }, () => {
   );
 });
 
-test('encodeHttp content-length 9', { only: true }, () => {
+test('encodeHttp content-length 9', () => {
   const onStartLine = mock.fn(() => {});
   const encode = encodeHttp({
     headers: {
@@ -495,7 +495,7 @@ test('encodeHttp content-length 9', { only: true }, () => {
   );
 });
 
-test('encodeHttp content-length invalid', { only: true }, () => {
+test('encodeHttp content-length invalid', () => {
   assert.throws(() => {
     encodeHttp({
       headers: {
@@ -506,7 +506,7 @@ test('encodeHttp content-length invalid', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length:0 1', { only: true }, () => {
+test('encodeHttp content-length:0 1', () => {
   const encode = encodeHttp({
     headers: {
       name: 'quan',
@@ -523,7 +523,7 @@ test('encodeHttp content-length:0 1', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length:0 2', { only: true }, () => {
+test('encodeHttp content-length:0 2', () => {
   const onStartLine = mock.fn(() => {});
   const encode = encodeHttp({
     headers: {
@@ -546,7 +546,7 @@ test('encodeHttp content-length:0 2', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length:0 3', { only: true }, () => {
+test('encodeHttp content-length:0 3', () => {
   const onHeader = mock.fn(() => {});
   const encode = encodeHttp({
     headers: {
@@ -569,7 +569,7 @@ test('encodeHttp content-length:0 3', { only: true }, () => {
   });
 });
 
-test('encodeHttp content-length and body 1', { only: true }, () => {
+test('encodeHttp content-length and body 1', () => {
   const ret = encodeHttp({
     headers: {
       name: 'quan',
@@ -583,7 +583,7 @@ test('encodeHttp content-length and body 1', { only: true }, () => {
   );
 });
 
-test('encodeHttp content-length and body 2', { only: true }, () => {
+test('encodeHttp content-length and body 2', () => {
   const ret = encodeHttp({
     headers: {
       name: 'quan',
@@ -597,7 +597,7 @@ test('encodeHttp content-length and body 2', { only: true }, () => {
   );
 });
 
-test('encodeHttp content-length:0 4', { only: true }, () => {
+test('encodeHttp content-length:0 4', () => {
   const onHeader = mock.fn(() => {});
   const onStartLine = mock.fn(() => {});
   const encode = encodeHttp({
@@ -627,13 +627,13 @@ test('encodeHttp content-length:0 4', { only: true }, () => {
   });
 });
 
-test('encodeHttp with chunked 1', { only: true }, () => {
+test('encodeHttp with chunked 1', () => {
   const encode = encodeHttp({});
   const chunk = encode(Buffer.from('aaa'));
   assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n\r\n3\r\naaa\r\n');
 });
 
-test('encodeHttp with chunked 2', { only: true }, () => {
+test('encodeHttp with chunked 2', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -650,7 +650,7 @@ test('encodeHttp with chunked 2', { only: true }, () => {
   assert.equal(chunkWithEnd.toString(), '0\r\n\r\n');
 });
 
-test('encodeHttp with stream body 2', { only: true }, () => {
+test('encodeHttp with stream body 2', () => {
   const encode = encodeHttp({});
   const chunk = encode();
   assert.equal(
@@ -659,7 +659,7 @@ test('encodeHttp with stream body 2', { only: true }, () => {
   );
 });
 
-test('encodeHttp with stream body 3', { only: true }, () => {
+test('encodeHttp with stream body 3', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -677,7 +677,7 @@ test('encodeHttp with stream body 3', { only: true }, () => {
   );
 });
 
-test('encodeHttp with stream body 4', { only: true }, () => {
+test('encodeHttp with stream body 4', () => {
   const onStartLine = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -703,7 +703,7 @@ test('encodeHttp with stream body 4', { only: true }, () => {
   assert.equal(onStartLine.mock.calls.length, 1);
 });
 
-test('encodeHttp with stream body 6', { only: true }, () => {
+test('encodeHttp with stream body 6', () => {
   const encode = encodeHttp({});
   let chunk = encode('aaa');
   assert.equal(
@@ -725,7 +725,7 @@ test('encodeHttp with stream body 6', { only: true }, () => {
   });
 });
 
-test('encodeHttp with stream body 7', { only: true }, () => {
+test('encodeHttp with stream body 7', () => {
   const onHeader = mock.fn(() => {});
   const encode = encodeHttp({
     onHeader,
@@ -744,7 +744,7 @@ test('encodeHttp with stream body 7', { only: true }, () => {
   );
 });
 
-test('encodeHttp with stream body 8', { only: true }, () => {
+test('encodeHttp with stream body 8', () => {
   const bufList = [];
   const encode = encodeHttp({
     onHeader: (chunk) => {
@@ -760,7 +760,7 @@ test('encodeHttp with stream body 8', { only: true }, () => {
   );
 });
 
-test('encodeHttp with stream body 9', { only: true }, () => {
+test('encodeHttp with stream body 9', () => {
   const bufList = [];
   const encode = encodeHttp({
     headers: {
@@ -782,7 +782,7 @@ test('encodeHttp with stream body 9', { only: true }, () => {
   );
 });
 
-test('encodeHttp with stream body 10', { only: true }, () => {
+test('encodeHttp with stream body 10', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -797,7 +797,7 @@ test('encodeHttp with stream body 10', { only: true }, () => {
   assert.equal(onHeader.mock.calls.length, 1);
 });
 
-test('encodeHttp with stream body 11', { only: true }, () => {
+test('encodeHttp with stream body 11', () => {
   const onStartLine = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -824,7 +824,7 @@ test('encodeHttp with stream body 11', { only: true }, () => {
   assert.equal(onStartLine.mock.calls.length, 1);
 });
 
-test('encodeHttp with chunk 1', { only: true }, () => {
+test('encodeHttp with chunk 1', () => {
   const encode = encodeHttp({});
   assert.equal(
     encode().toString(),
@@ -832,7 +832,7 @@ test('encodeHttp with chunk 1', { only: true }, () => {
   );
 });
 
-test('encodeHttp with chunk 3', { only: true }, () => {
+test('encodeHttp with chunk 3', () => {
   const encode = encodeHttp({
     headers: {
       name: 'quan',
@@ -844,7 +844,7 @@ test('encodeHttp with chunk 3', { only: true }, () => {
   );
 });
 
-test('encodeHttp with chunk 4', { only: true }, () => {
+test('encodeHttp with chunk 4', () => {
   const encode = encodeHttp({});
   let chunk = encode('aaa');
   assert.equal(
@@ -863,7 +863,7 @@ test('encodeHttp with chunk 4', { only: true }, () => {
   );
 });
 
-test('encodeHttp with chunk 5', { only: true }, () => {
+test('encodeHttp with chunk 5', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -888,7 +888,7 @@ test('encodeHttp with chunk 5', { only: true }, () => {
   assert.equal(onHeader.mock.calls.length, 1);
 });
 
-test('encodeHttp with chunk 6', { only: true }, () => {
+test('encodeHttp with chunk 6', () => {
   const onStartLine = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -922,7 +922,7 @@ test('encodeHttp with chunk 6', { only: true }, () => {
   assert.equal(onStartLine.mock.calls.length, 1);
 });
 
-test('encodeHttp with chunk 7', { only: true }, () => {
+test('encodeHttp with chunk 7', () => {
   const onHeader = mock.fn((chunk) => {
     assert.equal(
       chunk.toString(),
@@ -941,7 +941,7 @@ test('encodeHttp with chunk 7', { only: true }, () => {
   );
 });
 
-test('encodeHttp with chunk 8', { only: true }, () => {
+test('encodeHttp with chunk 8', () => {
   const largeSize = 65535 * 2 + 22;
   const encode = encodeHttp({});
   let chunk = encode('abc');
@@ -969,7 +969,7 @@ test('encodeHttp with chunk 8', { only: true }, () => {
   assert.equal(chunk.toString(), '0\r\n\r\n');
 });
 
-test('encodeHttp with chunk 9', { only: true }, () => {
+test('encodeHttp with chunk 9', () => {
   const largeSize = 65535 * 2;
   const encode = encodeHttp({});
   let chunk = encode('abc');
@@ -994,7 +994,7 @@ test('encodeHttp with chunk 9', { only: true }, () => {
   assert.equal(chunk.toString(), '0\r\n\r\n');
 });
 
-test('encodeHttp with chunk 10', { only: true }, () => {
+test('encodeHttp with chunk 10', () => {
   const largeSize = 65535;
   const encode = encodeHttp({});
   let chunk = encode('abc');
