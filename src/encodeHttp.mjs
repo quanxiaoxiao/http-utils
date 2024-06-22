@@ -156,15 +156,91 @@ const handleWithContentLengthStream = ({
   };
 };
 
-export default (options) => {
+const handleWithContentChunkStream = ({
+  method,
+  path,
+  httpVersion,
+  statusCode,
+  statusText,
+  headers,
+  onHeader,
+  onStartLine,
+}) => {
+  const keyValuePairList = [...headers];
   const state = {
     complete: false,
     contentChunkLength: 0,
-    contentLength: null,
   };
+  keyValuePairList.push('Transfer-Encoding');
+  keyValuePairList.push('chunked');
 
+  if (onHeader) {
+   onHeader(Buffer.concat([
+      ...onStartLine ? [] : [encodeHttpStartLine({
+        method,
+        path,
+        httpVersion,
+        statusCode,
+        statusText,
+      })],
+      encodeHttpHeaders(keyValuePairList),
+    ]));
+  }
+  return (data) => {
+    assert(!state.complete);
+    if (data != null) {
+      assert(Buffer.isBuffer(data) || typeof data === 'string');
+    }
+    const chunk = data != null ? Buffer.from(data) : null;
+    if (chunk == null || chunk.length === 0) {
+      state.complete = true;
+      if (state.contentChunkLength === 0 && !onHeader) {
+        return Buffer.concat([
+          ...onStartLine ? [] : [encodeHttpStartLine({
+            method,
+            path,
+            httpVersion,
+            statusCode,
+            statusText,
+          })],
+          encodeHttpHeaders(keyValuePairList),
+          BODY_CHUNK_END,
+        ]);
+      }
+      return  BODY_CHUNK_END;
+    }
+    const chunkSize = chunk.length;
+    if (state.contentChunkLength === 0) {
+      state.contentChunkLength = chunkSize;
+      if (!onHeader) {
+        return Buffer.concat([
+          ...onStartLine ? [] : [encodeHttpStartLine({
+            method,
+            path,
+            httpVersion,
+            statusCode,
+            statusText,
+          })],
+          encodeHttpHeaders(keyValuePairList),
+          wrapContentChunk(chunk),
+        ]);
+      }
+      return wrapContentChunk(chunk);
+    }
+    state.contentChunkLength += chunkSize;
+    return wrapContentChunk(chunk);
+  };
+};
+
+export default (options) => {
   if (options.onStartLine) {
-    options.onStartLine(encodeHttpStartLine(options));
+    options.onStartLine(encodeHttpStartLine({
+      method: options.method,
+      path: options.path,
+      httpVersion: options.httpVersion,
+      statusCode: options.statusCode,
+      statusText: options.statusText,
+    }));
   }
 
   if (options.headers) {
@@ -210,46 +286,15 @@ export default (options) => {
     });
   }
 
-  keyValuePairList.push('Transfer-Encoding');
-  keyValuePairList.push('chunked');
-
-  if (options.onHeader) {
-    options.onHeader(Buffer.concat([
-      ...options.onStartLine ? [] : [encodeHttpStartLine(options)],
-      encodeHttpHeaders(keyValuePairList),
-    ]));
-  }
-
-  return (data) => {
-    assert(!state.complete);
-    if (data != null) {
-      assert(Buffer.isBuffer(data) || typeof data === 'string');
-    }
-    const chunk = data != null ? Buffer.from(data) : null;
-    if (chunk == null || chunk.length === 0) {
-      state.complete = true;
-      if (state.contentChunkLength === 0 && !options.onHeader) {
-        return Buffer.concat([
-          ...options.onStartLine ? [] : [encodeHttpStartLine(options)],
-          encodeHttpHeaders(keyValuePairList),
-          BODY_CHUNK_END,
-        ]);
-      }
-      return  BODY_CHUNK_END;
-    }
-    const chunkSize = chunk.length;
-    if (state.contentChunkLength === 0) {
-      state.contentChunkLength = chunkSize;
-      if (!options.onHeader) {
-        return Buffer.concat([
-          ...options.onStartLine ? [] : [encodeHttpStartLine(options)],
-          encodeHttpHeaders(keyValuePairList),
-          wrapContentChunk(chunk),
-        ]);
-      }
-      return wrapContentChunk(chunk);
-    }
-    state.contentChunkLength += chunkSize;
-    return wrapContentChunk(chunk);
-  };
+  return handleWithContentChunkStream({
+    method: options.method,
+    path: options.path,
+    httpVersion: options.httpVersion,
+    statusCode: options.statusCode,
+    statusText: options.statusText,
+    headers: keyValuePairList,
+    body: options.body,
+    onHeader: options.onHeader,
+    onStartLine: options.onStartLine,
+  });
 };
