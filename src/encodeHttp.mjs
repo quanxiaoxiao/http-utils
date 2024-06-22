@@ -11,6 +11,64 @@ import getValue from './getValue.mjs';
 
 const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
 
+const handleWithContentBody = ({
+  method,
+  path,
+  httpVersion,
+  statusCode,
+  statusText,
+  headers,
+  body,
+  onHeader,
+  onStartLine,
+}) => {
+  const keyValuePairList = [...headers];
+  let contentLength = 0;
+  keyValuePairList.push('Content-Length');
+  if (body == null) {
+    contentLength = 0;
+  } else {
+    assert(Buffer.isBuffer(body) || typeof body === 'string');
+    contentLength = Buffer.byteLength(body);
+  }
+  keyValuePairList.push(`${contentLength}`);
+  const bufList = [];
+
+  if (onHeader) {
+    onHeader(Buffer.concat([
+      ...onStartLine ? [] : [encodeHttpStartLine({
+        method,
+        path,
+        httpVersion,
+        statusCode,
+        statusText,
+      })],
+      encodeHttpHeaders(keyValuePairList),
+    ]));
+  } else {
+    if (!onStartLine) {
+      bufList.push(encodeHttpStartLine({
+        method,
+        path,
+        httpVersion,
+        statusCode,
+        statusText,
+      }));
+    }
+    bufList.push(encodeHttpHeaders(keyValuePairList));
+  }
+
+  if (contentLength > 0) {
+    bufList.push(Buffer.isBuffer(body) ? body : Buffer.from(body));
+  }
+
+  if (bufList.length === 0) {
+    return null;
+  }
+
+  return Buffer.concat(bufList);
+};
+
 export default (options) => {
   const state = {
     complete: false,
@@ -36,38 +94,17 @@ export default (options) => {
   );
 
   if (Object.hasOwnProperty.call(options, 'body')) {
-    keyValuePairList.push('Content-Length');
-    if (options.body == null) {
-      state.contentLength = 0;
-      keyValuePairList.push(0);
-    } else {
-      assert(Buffer.isBuffer(options.body) || typeof options.body === 'string');
-      state.contentLength = Buffer.byteLength(options.body);
-      keyValuePairList.push(state.contentLength);
-    }
-    const bufList = [];
-
-    if (options.onHeader) {
-      options.onHeader(Buffer.concat([
-        ...options.onStartLine ? [] : [encodeHttpStartLine(options)],
-        encodeHttpHeaders(keyValuePairList),
-      ]));
-    } else {
-      if (!options.onStartLine) {
-        bufList.push(encodeHttpStartLine(options));
-      }
-      bufList.push(encodeHttpHeaders(keyValuePairList));
-    }
-
-    if (state.contentLength > 0) {
-      bufList.push(Buffer.isBuffer(options.body) ? options.body : Buffer.from(options.body));
-    }
-
-    if (bufList.length === 0) {
-      return null;
-    }
-
-    return Buffer.concat(bufList);
+    return handleWithContentBody({
+      method: options.method,
+      path: options.path,
+      httpVersion: options.httpVersion,
+      statusCode: options.statusCode,
+      statusText: options.statusText,
+      headers: keyValuePairList,
+      body: options.body,
+      onHeader: options.onHeader,
+      onStartLine: options.onStartLine,
+    });
   }
 
   const contentLength = getValue(httpHeaderList, 'content-length');
