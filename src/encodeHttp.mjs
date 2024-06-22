@@ -1,6 +1,7 @@
 /* eslint no-nested-ternary: 0 */
 import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
+import { Readable } from 'node:stream';
 import _ from 'lodash';
 import convertObjectToArray from './convertObjectToArray.mjs';
 import filterHeaders from './filterHeaders.mjs';
@@ -176,15 +177,15 @@ const handleWithContentChunkStream = ({
 
   if (onHeader) {
    onHeader(Buffer.concat([
-      ...onStartLine ? [] : [encodeHttpStartLine({
-        method,
-        path,
-        httpVersion,
-        statusCode,
-        statusText,
-      })],
-      encodeHttpHeaders(keyValuePairList),
-    ]));
+     ...onStartLine ? [] : [encodeHttpStartLine({
+       method,
+       path,
+       httpVersion,
+       statusCode,
+       statusText,
+     })],
+     encodeHttpHeaders(keyValuePairList),
+   ]));
   }
   return (data) => {
     assert(!state.complete);
@@ -257,6 +258,19 @@ export default (options) => {
   );
 
   if (Object.hasOwnProperty.call(options, 'body')) {
+    if (options.body instanceof Readable) {
+      return handleWithContentChunkStream({
+        method: options.method,
+        path: options.path,
+        httpVersion: options.httpVersion,
+        statusCode: options.statusCode,
+        statusText: options.statusText,
+        headers: keyValuePairList,
+        body: options.body,
+        onHeader: options.onHeader,
+        onStartLine: options.onStartLine,
+      });
+    }
     return handleWithContentBody({
       method: options.method,
       path: options.path,
