@@ -1,4 +1,5 @@
 import { Buffer } from 'node:buffer';
+import { PassThrough } from 'node:stream';
 import { test, mock } from 'node:test';
 import http from 'node:http';
 import assert from 'node:assert';
@@ -1014,4 +1015,35 @@ test('encodeHttp with chunk 10', () => {
   );
   chunk = encode();
   assert.equal(chunk.toString(), '0\r\n\r\n');
+});
+
+test('encodeHttp with chunk 11', () => {
+  const encode = encodeHttp({
+    headers: {
+      name: 'quan',
+    },
+    body: new PassThrough(),
+  });
+  assert.equal(typeof encode, 'function');
+  const chunk = encode(Buffer.from('aaa'));
+  assert.equal(chunk.toString(), 'HTTP/1.1 200 OK\r\nname: quan\r\nTransfer-Encoding: chunked\r\n\r\n3\r\naaa\r\n');
+});
+
+test('encodeHttp with chunk 12', () => {
+  const onHeader = mock.fn(() => {});
+  const encode = encodeHttp({
+    headers: {
+      name: 'quan',
+    },
+    body: new PassThrough(),
+    onHeader,
+  });
+  assert.equal(
+    onHeader.mock.calls[0].arguments[0].toString(),
+    'HTTP/1.1 200 OK\r\nname: quan\r\nTransfer-Encoding: chunked\r\n\r\n',
+  );
+  assert.equal(typeof encode, 'function');
+  const chunk = encode(Buffer.from('aaa'));
+  assert.equal(chunk.toString(), '3\r\naaa\r\n');
+  assert.equal(onHeader.mock.calls.length, 1);
 });
