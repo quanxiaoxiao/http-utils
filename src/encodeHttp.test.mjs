@@ -496,6 +496,27 @@ test('encodeHttp content-length 9', () => {
   );
 });
 
+test('encodeHttp content-length stream', () => {
+  const encode = encodeHttp({
+    headers: {
+      name: 'quan',
+      'content-length': 6,
+    },
+    body: new PassThrough(),
+  });
+  assert.equal(
+    encode('ab').toString(),
+    'HTTP/1.1 200 OK\r\nname: quan\r\nContent-Length: 6\r\n\r\nab',
+  );
+  assert.equal(
+    encode('ccca').toString(),
+    'ccca',
+  );
+  assert.throws(() => {
+    encode('asdfw');
+  });
+});
+
 test('encodeHttp content-length invalid', () => {
   assert.throws(() => {
     encodeHttp({

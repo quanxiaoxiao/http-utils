@@ -257,8 +257,24 @@ export default (options) => {
     ['content-length', 'transfer-encoding'],
   );
 
+  const contentLength = getValue(httpHeaderList, 'content-length');
+
   if (Object.hasOwnProperty.call(options, 'body')) {
     if (options.body instanceof Readable) {
+      if (contentLength != null) {
+        return handleWithContentLengthStream({
+          contentLength: Number(contentLength),
+          method: options.method,
+          path: options.path,
+          httpVersion: options.httpVersion,
+          statusCode: options.statusCode,
+          statusText: options.statusText,
+          headers: keyValuePairList,
+          body: options.body,
+          onHeader: options.onHeader,
+          onStartLine: options.onStartLine,
+        });
+      }
       return handleWithContentChunkStream({
         method: options.method,
         path: options.path,
@@ -284,7 +300,6 @@ export default (options) => {
     });
   }
 
-  const contentLength = getValue(httpHeaderList, 'content-length');
   if (contentLength != null) {
     return handleWithContentLengthStream({
       contentLength: Number(contentLength),
