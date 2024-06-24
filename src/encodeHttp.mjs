@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
 import { Readable } from 'node:stream';
 import _ from 'lodash';
+import { EncodeHttpError } from './errors.mjs';
 import convertObjectToArray from './convertObjectToArray.mjs';
 import filterHeaders from './filterHeaders.mjs';
 import encodeHttpHeaders from './encodeHttpHeaders.mjs';
@@ -81,8 +82,9 @@ const handleWithContentLengthStream = ({
   onHeader,
   onStartLine,
 }) => {
-  assert(Number.isInteger(contentLength));
-  assert(contentLength >= 0);
+  if (!Number.isInteger(contentLength) || contentLength < 0) {
+    throw new EncodeHttpError(`Encode Http Error, Content-Length \`${contentLength}\` invalid`);
+  }
   const state = {
     complete: false,
     contentChunkLength: 0,
@@ -104,7 +106,9 @@ const handleWithContentLengthStream = ({
   }
   if (contentLength === 0) {
     return () => {
-      assert(!state.complete);
+      if (state.complete) {
+        throw new EncodeHttpError('Encode Http Error, encode already complete');
+      }
       state.complete = true;
       if (onHeader) {
         return Buffer.from([]);
@@ -131,7 +135,9 @@ const handleWithContentLengthStream = ({
     const chunk = Buffer.from(data);
     const chunkSize = chunk.length;
     assert(chunkSize > 0);
-    assert(state.contentChunkLength + chunkSize <= contentLength);
+    if (state.contentChunkLength + chunkSize > contentLength) {
+      throw new EncodeHttpError(`Encoding Http Error, Content-Length exceed \`${contentLength}\``);
+    }
     if (state.contentChunkLength === 0) {
       state.contentChunkLength += chunkSize;
       if (state.contentChunkLength === contentLength) {
@@ -153,7 +159,9 @@ const handleWithContentLengthStream = ({
       return chunk;
     }
     state.contentChunkLength += chunkSize;
-    assert(state.contentChunkLength <= contentLength);
+    if (state.contentChunkLength > contentLength) {
+      throw new EncodeHttpError(`Encoding Http Error, Content-Length exceed \`${contentLength}\``);
+    }
     if (state.contentChunkLength === contentLength) {
       state.complete = true;
     }
