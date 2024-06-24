@@ -21,3 +21,10 @@ export class EncodeHttpError extends Error {
     this.message = message || 'Encode Http Error';
   }
 }
+
+export class DecodeHttpError extends Error {
+  constructor(message) {
+    super(message);
+    this.message = message || 'Decode Http Error';
+  }
+}

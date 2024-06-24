@@ -12,6 +12,8 @@ import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
 import {
   HttpParserError,
   HttpUrlParseError,
+  EncodeHttpError,
+  DecodeHttpError,
 } from './errors.mjs';
 import parseHttpUrl from './parseHttpUrl.mjs';
 import parseHttpPath from './parseHttpPath.mjs';
@@ -39,4 +41,7 @@ export {
 
   HttpParserError,
   HttpUrlParseError,
+
+  EncodeHttpError,
+  DecodeHttpError,
 };
