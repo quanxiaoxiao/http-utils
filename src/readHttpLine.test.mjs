@@ -1,45 +1,50 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import readHttpLine from './readHttpLine.mjs';
+import { DecodeHttpError } from './errors.mjs';
 
 test('readHttpLine', () => {
-  assert.throws(() => {
+  assert.throws(
+    () => {
     readHttpLine('aaa');
-  });
-  assert.throws(() => {
-    readHttpLine(
-      Buffer.from('abc'),
-      8,
-    );
-  });
-  assert.throws(() => {
-    readHttpLine(
-      Buffer.from('abcefg\n'),
-    );
-  });
+    },
+    (error) => error instanceof assert.AssertionError,
+  );
+  assert.throws(
+    () => {
+      readHttpLine(
+        Buffer.from('abc'),
+        8,
+      );
+    },
+    (error) => error instanceof assert.AssertionError,
+  );
+  assert.throws(
+    () => {
+      readHttpLine(
+        Buffer.from('abcefg\n'),
+      );
+    },
+    (error) => error instanceof DecodeHttpError,
+  );
   assert.throws(
     () => {
       readHttpLine(
         Buffer.from('abcefg\n'),
         0,
-        400,
       );
     },
-    (error) => error.statusCode === 400 && error.message === 'parse fail',
+    (error) => error instanceof DecodeHttpError,
   );
-  assert.throws(() => {
-    readHttpLine(
-      Buffer.from('abc'),
-      0,
-      1110,
-    );
-  });
-  assert.throws(() => {
-    readHttpLine(
-      Buffer.from([]),
-      1,
-    );
-  });
+  assert.throws(
+    () => {
+      readHttpLine(
+        Buffer.from([]),
+        1,
+      );
+    },
+    (error) => error instanceof assert.AssertionError,
+  );
   assert.throws(
     () => {
       readHttpLine(
@@ -47,7 +52,7 @@ test('readHttpLine', () => {
         3,
       );
     },
-    (error) => error.statusCode == null && error.message === 'parse fail',
+    (error) => error instanceof DecodeHttpError,
   );
 
   assert.throws(
@@ -57,7 +62,7 @@ test('readHttpLine', () => {
         3,
       );
     },
-    (error) => error.statusCode == null && error.message === 'parse fail',
+    (error) => error instanceof DecodeHttpError,
   );
 
   assert.throws(
@@ -65,10 +70,9 @@ test('readHttpLine', () => {
       readHttpLine(
         Buffer.from('\n'),
         0,
-        400,
       );
     },
-    (error) => error.statusCode === 400 && error.message === 'parse fail',
+    (error) => error instanceof DecodeHttpError,
   );
 
   assert.throws(
@@ -76,11 +80,10 @@ test('readHttpLine', () => {
       readHttpLine(
         Buffer.from('1234567'),
         0,
-        400,
         5,
       );
     },
-    (error) => error.statusCode === 400 && error.message === 'parse fail, chunk exceed max size',
+    (error) => error instanceof DecodeHttpError,
   );
 
   assert.equal(

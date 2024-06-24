@@ -10,7 +10,6 @@ import getCurrentDateName from './getCurrentDateName.mjs';
 import encodeHttp from './encodeHttp.mjs';
 import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
 import {
-  HttpParserError,
   HttpUrlParseError,
   EncodeHttpError,
   DecodeHttpError,
@@ -39,7 +38,6 @@ export {
   hasHttpBodyContent,
   isHttpStream,
 
-  HttpParserError,
   HttpUrlParseError,
 
   EncodeHttpError,
