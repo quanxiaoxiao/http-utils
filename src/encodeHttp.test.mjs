@@ -3,6 +3,7 @@ import { PassThrough } from 'node:stream';
 import { test, mock } from 'node:test';
 import http from 'node:http';
 import assert from 'node:assert';
+import { EncodeHttpError } from './errors.mjs';
 import encodeHttp from './encodeHttp.mjs';
 
 test('encodeHttp', () => {
@@ -556,25 +557,31 @@ test('encodeHttp content-length stream 3', () => {
 });
 
 test('encodeHttp content-length invalid 1', () => {
-  assert.throws(() => {
-    encodeHttp({
-      headers: {
-        name: 'quan',
-        'content-length': -3,
-      },
-    });
-  });
+  assert.throws(
+    () => {
+      encodeHttp({
+        headers: {
+          name: 'quan',
+          'content-length': -3,
+        },
+      });
+    },
+    (error) => error instanceof EncodeHttpError,
+  );
 });
 
 test('encodeHttp content-length invalid 2', () => {
-  assert.throws(() => {
-    encodeHttp({
-      headers: {
-        name: 'quan',
-        'content-length': 8.8,
-      },
-    });
-  });
+  assert.throws(
+    () => {
+      encodeHttp({
+        headers: {
+          name: 'quan',
+          'content-length': 8.8,
+        },
+      });
+    },
+    (error) => error instanceof EncodeHttpError,
+  );
 });
 
 test('encodeHttp content-length:0 1', () => {
@@ -636,6 +643,25 @@ test('encodeHttp content-length:0 3', () => {
   assert.throws(() => {
     encode();
   });
+});
+
+test('encodeHttp content-length:0 4', () => {
+  const encode = encodeHttp({
+    headers: {
+      name: 'quan',
+      'content-length': 0,
+    },
+    body: new PassThrough(),
+  });
+  assert.equal(typeof encode, 'function');
+  assert.throws(
+    () => {
+      encode('aaa');
+    },
+    (error) => {
+      return error instanceof EncodeHttpError;
+    },
+  );
 });
 
 test('encodeHttp content-length and body 1', () => {
