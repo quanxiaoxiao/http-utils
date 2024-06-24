@@ -64,7 +64,7 @@ const handleWithContentBody = ({
   }
 
   if (bufList.length === 0) {
-    return null;
+    return Buffer.from([]);
   }
 
   return Buffer.concat(bufList);
@@ -107,7 +107,7 @@ const handleWithContentLengthStream = ({
       assert(!state.complete);
       state.complete = true;
       if (onHeader) {
-        return null;
+        return Buffer.from([]);
       }
       return Buffer.concat([
         ...onStartLine ? [] : [encodeHttpStartLine({
@@ -122,6 +122,10 @@ const handleWithContentLengthStream = ({
     };
   }
   return (data) => {
+    if (state.complete) {
+      assert(data == null);
+      return Buffer.from([]);
+    }
     assert(!state.complete);
     assert(Buffer.isBuffer(data) || typeof data === 'string');
     const chunk = Buffer.from(data);

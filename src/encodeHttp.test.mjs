@@ -241,7 +241,7 @@ test('encodeHttp with onHeader 1', () => {
     body: null,
   });
   assert.equal(onHeader.mock.calls.length, 1);
-  assert.equal(ret, null);
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
 });
 
 test('encodeHttp with onHeader 2', () => {
@@ -258,7 +258,7 @@ test('encodeHttp with onHeader 2', () => {
     body: null,
   });
   assert.equal(onHeader.mock.calls.length, 1);
-  assert.equal(ret, null);
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
 });
 
 test('encodeHttp with onHeader 3', () => {
@@ -275,7 +275,7 @@ test('encodeHttp with onHeader 3', () => {
   });
   assert.equal(onHeader.mock.calls.length, 1);
   assert.equal(onStartLine.mock.calls.length, 1);
-  assert.equal(ret, null);
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
 });
 
 test('encodeHttp with onHeader 4', () => {
@@ -496,7 +496,7 @@ test('encodeHttp content-length 9', () => {
   );
 });
 
-test('encodeHttp content-length stream', () => {
+test('encodeHttp content-length stream 1', () => {
   const encode = encodeHttp({
     headers: {
       name: 'quan',
@@ -517,12 +517,61 @@ test('encodeHttp content-length stream', () => {
   });
 });
 
-test('encodeHttp content-length invalid', () => {
+test('encodeHttp content-length stream 2', () => {
+  const encode = encodeHttp({
+    headers: {
+      name: 'quan',
+      'content-length': 6,
+    },
+    body: new PassThrough(),
+  });
+  assert.equal(
+    encode('ab').toString(),
+    'HTTP/1.1 200 OK\r\nname: quan\r\nContent-Length: 6\r\n\r\nab',
+  );
+  assert.equal(
+    encode('ccca').toString(),
+    'ccca',
+  );
+  const ret = encode();
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
+});
+
+test('encodeHttp content-length stream 3', () => {
+  const encode = encodeHttp({
+    headers: {
+      name: 'quan',
+      'content-length': 3,
+    },
+    body: new PassThrough(),
+  });
+  assert.equal(
+    encode('abe').toString(),
+    'HTTP/1.1 200 OK\r\nname: quan\r\nContent-Length: 3\r\n\r\nabe',
+  );
+  let ret = encode();
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
+  ret = encode();
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
+});
+
+test('encodeHttp content-length invalid 1', () => {
   assert.throws(() => {
     encodeHttp({
       headers: {
         name: 'quan',
         'content-length': -3,
+      },
+    });
+  });
+});
+
+test('encodeHttp content-length invalid 2', () => {
+  assert.throws(() => {
+    encodeHttp({
+      headers: {
+        name: 'quan',
+        'content-length': 8.8,
       },
     });
   });
@@ -577,10 +626,8 @@ test('encodeHttp content-length:0 3', () => {
     },
     onHeader,
   });
-  assert.equal(
-    encode(),
-    null,
-  );
+  const ret = encode();
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
   assert.equal(onHeader.mock.calls.length, 1);
   assert.equal(
     onHeader.mock.calls[0].arguments[0].toString(),
@@ -630,10 +677,8 @@ test('encodeHttp content-length:0 4', () => {
     onHeader,
     onStartLine,
   });
-  assert.equal(
-    encode(),
-    null,
-  );
+  const ret = encode();
+  assert(Buffer.isBuffer(ret) && ret.length === 0);
   assert.equal(onStartLine.mock.calls.length, 1);
   assert.equal(onHeader.mock.calls.length, 1);
   assert.equal(
