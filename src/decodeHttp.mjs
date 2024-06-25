@@ -1,7 +1,6 @@
 /* eslint prefer-destructuring: 0 */
 import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
-import { PassThrough } from 'node:stream';
 import { parseInteger } from '@quanxiaoxiao/utils';
 import readHttpLine from './readHttpLine.mjs';
 import { DecodeHttpError } from './errors.mjs';
@@ -231,7 +230,11 @@ const decodeHttp = ({
         }
       }
       if (isHttpStream(state.headers)) {
-        assert(typeof onBody === 'function');
+        if (state.method != null) {
+          state.headers['content-length'] = 0;
+        } else {
+          assert(typeof onBody === 'function');
+        }
       }
       state.timeOnHeadersEnd = performance.now();
       state.step += 1;
