@@ -71,12 +71,8 @@ const decodeHttp = ({
       timeOnBodyEnd: null,
     };
 
-    if (isHeaderPraseComplete()) {
-      if (isHttpStream(state.headers)) {
-        result.body = state.body;
-      } else {
-        result.body = state.bodyBuf;
-      }
+    if (isHeaderPraseComplete() && !isHttpStream(state.headers)) {
+      result.body = state.bodyBuf;
     }
 
     if (state.isRequest) {
@@ -235,7 +231,7 @@ const decodeHttp = ({
         }
       }
       if (isHttpStream(state.headers)) {
-        state.body = new PassThrough();
+        assert(typeof onBody === 'function');
       }
       state.timeOnHeadersEnd = performance.now();
       state.step += 1;
@@ -358,7 +354,6 @@ const decodeHttp = ({
         if (onBody) {
           await onBody(buf);
         }
-        state.body.write(buf);
       }
     } else if (!Object.hasOwnProperty.call(state.headers, 'content-length')) {
       assert(state.headers['transfer-encoding']);

@@ -1,6 +1,5 @@
 import { test, mock } from 'node:test';
 import assert from 'node:assert';
-import { Readable } from 'node:stream';
 import { waitFor } from '@quanxiaoxiao/utils';
 import { DecodeHttpError } from './errors.mjs';
 import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
@@ -386,21 +385,20 @@ test('decodeHttp > decodeHttpRequest headers multile header key', async () => {
 });
 
 test('decodeHttp > decodeHttpRequest with stream', async () => {
-  const handleData = mock.fn(() => {});
+  const onBody = mock.fn(() => {});
   const decode = decodeHttpRequest({
     onHeader: (ret) => {
-      assert(ret.body instanceof Readable);
+      assert.equal(ret.body, null);
     },
+    onBody,
   });
-  const ret = await decode(Buffer.from('GET / HTTP/1.1\r\n\r\naaaa'));
-  assert(ret.body instanceof Readable);
-  ret.body.on('data', handleData);
+  await decode(Buffer.from('GET / HTTP/1.1\r\n\r\naaaa'));
   await waitFor(100);
   await decode(Buffer.from('ccc'));
   await waitFor(1000);
-  assert.equal(handleData.mock.calls.length, 2);
-  assert.equal(handleData.mock.calls[0].arguments[0].toString(), 'aaaa');
-  assert.equal(handleData.mock.calls[1].arguments[0].toString(), 'ccc');
+  assert.equal(onBody.mock.calls.length, 2);
+  assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'aaaa');
+  assert.equal(onBody.mock.calls[1].arguments[0].toString(), 'ccc');
 });
 
 test('decodeHttp > decodeHttpRequest headers set default content-length 1', async () => {
@@ -527,7 +525,6 @@ test('decodeHttp > decodeHttpRequest body with content-length 5', async () => {
   let ret = await decode(Buffer.from('name: aaa\r\n'));
   assert.equal(ret.body, null);
   ret = await decode(Buffer.from('\r\naaabbb'));
-  assert(ret.body instanceof Readable);
   assert(!ret.complete);
   assert.equal(onBody.mock.calls.length, 1);
   assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'aaabbb');
