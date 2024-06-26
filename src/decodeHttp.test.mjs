@@ -432,6 +432,14 @@ test('decodeHttp > decodeHttpResponse with stream', async () => {
   assert.equal(onBody.mock.calls[1].arguments[0].toString(), 'ccc');
 });
 
+test('decodeHttp > decodeHttpResponse 22', async () => {
+  const decode = decodeHttpResponse();
+  const ret = await decode(Buffer.from('HTTP/1.1 500 OK\r\nName: aaaa\r\n\r\n'));
+  assert.equal(ret.complete, true);
+  assert.equal(ret.statusCode, 500);
+  assert.equal(ret.headers['content-length'], 0);
+});
+
 test('decodeHttp > decodeHttpResponse headers set default content-length 1', async () => {
   const onBody = mock.fn(() => {});
   const decode = decodeHttpResponse({

@@ -230,10 +230,10 @@ const decodeHttp = ({
         }
       }
       if (isHttpStream(state.headers)) {
-        if (state.method != null) {
-          state.headers['content-length'] = 0;
-        } else {
+        if (state.statusCode === 200) {
           assert(typeof onBody === 'function');
+        } else {
+          state.headers['content-length'] = 0;
         }
       }
       state.timeOnHeadersEnd = performance.now();
