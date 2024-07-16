@@ -4,7 +4,7 @@ const getValue = (s) => {
   }
   try {
     return decodeURIComponent(s);
-  } catch (error) {
+  } catch (error) { // eslint-disable-line
     return s;
   }
 };

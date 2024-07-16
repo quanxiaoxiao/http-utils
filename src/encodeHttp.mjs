@@ -9,7 +9,7 @@ import filterHeaders from './filterHeaders.mjs';
 import encodeHttpHeaders from './encodeHttpHeaders.mjs';
 import wrapContentChunk from './wrapContentChunk.mjs';
 import encodeHttpStartLine from './encodeHttpStartLine.mjs';
-import getValue from './getValue.mjs';
+import getHeaderValue from './getHeaderValue.mjs';
 
 const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
 
@@ -270,7 +270,7 @@ export default (options) => {
     ['content-length', 'transfer-encoding'],
   );
 
-  const contentLength = getValue(httpHeaderList, 'content-length');
+  const contentLength = getHeaderValue(httpHeaderList, 'content-length');
 
   if (Object.hasOwnProperty.call(options, 'body')) {
     if (options.body instanceof Readable) {
