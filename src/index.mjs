@@ -17,6 +17,7 @@ import {
 import parseHttpUrl from './parseHttpUrl.mjs';
 import parseHttpPath from './parseHttpPath.mjs';
 import hasHttpBodyContent from './hasHttpBodyContent.mjs';
+import parseContentRange from './parseContentRange.mjs';
 
 import isHttpStream from './isHttpStream.mjs';
 
@@ -35,6 +36,7 @@ export {
   decodeHttpResponse,
   parseHttpUrl,
   parseHttpPath,
+  parseContentRange,
   hasHttpBodyContent,
   isHttpStream,
 
