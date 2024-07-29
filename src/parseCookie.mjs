@@ -15,6 +15,13 @@ export default (str) => {
     .reduce((acc, s) => {
       const index = s.indexOf('=');
       if (index === -1) {
+        const key = s.trim();
+        if (key) {
+          return {
+            ...acc,
+            [key]: true,
+          };
+        }
         return acc;
       }
       const key = s.slice(0, index).trim();

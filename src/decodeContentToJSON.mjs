@@ -20,7 +20,7 @@ export default (chunk, headers) => {
       return JSON.parse(content.toString());
     }
     return qs.parse(content.toString());
-  } catch (error) {
+  } catch (error) { // eslint-disable-line
     return null;
   }
 };
