@@ -11,14 +11,15 @@ export default ({
   statusText,
 }) => {
   const result = [];
+  const version = httpVersion || HTTP_VERSION;
   if (method) {
     result.push(method.toUpperCase());
     result.push(path || '/');
-    result.push(`HTTP/${httpVersion || HTTP_VERSION}`);
+    result.push(`HTTP/${version}`);
   } else {
     const code = statusCode == null ? 200 : statusCode;
     assert(code >= 0 && code <= 999);
-    result.push(`HTTP/${httpVersion || HTTP_VERSION}`);
+    result.push(`HTTP/${version}`);
     result.push(`${code}`);
     if ((typeof statusText) !== 'undefined') {
       if (statusText != '' && statusText != null) {
