@@ -5,6 +5,7 @@ import { parseInteger } from '@quanxiaoxiao/utils';
 import readHttpLine from './readHttpLine.mjs';
 import { DecodeHttpError } from './errors.mjs';
 import isHttpStream from './isHttpStream.mjs';
+import isWebSocketRequest from './isWebSocketRequest.mjs';
 
 const crlf = Buffer.from([0x0d, 0x0a]);
 const MAX_CHUNK_SIZE = 1024 * 1024 * 800;
@@ -231,7 +232,9 @@ const decodeHttp = ({
         }
       }
       if (isHttpStream(state.headers)) {
-        if (state.statusCode === 200 || state.statusCode === 101) {
+        if (state.statusCode === 200
+          || state.statusCode === 101
+          || isWebSocketRequest({ method: state.method, headers: state.headers })) {
           assert(typeof onBody === 'function');
         } else {
           state.headers['content-length'] = 0;

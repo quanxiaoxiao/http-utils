@@ -988,6 +988,41 @@ test('decodeHttpResponse with websocket', async () => {
     '\r\n',
   ].join('\r\n')));
   assert(!ret.complete);
+  assert(!Object.hasOwnProperty.call(ret.headers, 'content-length'));
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(ret.dataBuf.length, 0);
+  assert.equal(onBody.mock.calls.length, 0);
+  ret = await decode(Buffer.from('aaa'));
+  assert.equal(onBody.mock.calls.length, 1);
+  assert(!ret.complete);
+  assert.equal(ret.dataBuf.length, 0);
+  ret = await decode(Buffer.from('bbbb'));
+  assert.equal(ret.dataBuf.length, 0);
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(onBody.mock.calls.length, 2);
+  assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'aaa');
+  assert.equal(onBody.mock.calls[1].arguments[0].toString(), 'bbbb');
+});
+
+test('decodeHttpRequest with websocket', async () => {
+  const onHeader = mock.fn(() => {});
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpRequest({
+    onHeader,
+    onBody,
+  });
+  let ret = await decode(Buffer.from([
+    'GET /aaa/ss HTTP/1.1',
+    'Sec-WebSocket-Version: 13',
+    'Sec-WebSocket-Key: opHwyzKz3E0E5cb+BY6i6A==',
+    'Connection: Upgrade',
+    'Upgrade: websocket',
+    'Sec-WebSocket-Extensions: permessage-deflate; client_max_window_bits',
+    'Host: 127.0.0.1:3363',
+    '\r\n',
+  ].join('\r\n')));
+  assert(!ret.complete);
+  assert(!Object.hasOwnProperty.call(ret.headers, 'content-length'));
   assert.equal(onHeader.mock.calls.length, 1);
   assert.equal(ret.dataBuf.length, 0);
   assert.equal(onBody.mock.calls.length, 0);
