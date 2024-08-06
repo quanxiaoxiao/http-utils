@@ -966,3 +966,39 @@ test('decodeHttp > decodeHttpRequest pending', async () => {
   assert.deepEqual(ret.headers, { 'content-length': 8 });
   assert.equal(ret.body.toString(), 'aabb');
 });
+
+test('decodeHttp url', async () => {
+  const decode = decodeHttpRequest();
+  const ret = await decode(Buffer.from('GET http://127.0.0.1:9090/static/mtruck/jessibuca.js HTTP/1.1\r\nContent-Length: 0\r\n\r\n'));
+  assert.equal(ret.path, 'http://127.0.0.1:9090/static/mtruck/jessibuca.js');
+});
+
+test('decodeHttpResponse with websocket', async () => {
+  const onHeader = mock.fn(() => {});
+  const onBody = mock.fn(() => {});
+  const decode = decodeHttpResponse({
+    onHeader,
+    onBody,
+  });
+  let ret = await decode(Buffer.from([
+    'HTTP/1.1 101 Switching Protocols',
+    'Upgrade: websocket',
+    'Connection: Upgrade',
+    'Sec-WebSocket-Accept: HF2n5np4bBfjAM05DT4RVuU5Y8Q=',
+    '\r\n',
+  ].join('\r\n')));
+  assert(!ret.complete);
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(ret.dataBuf.length, 0);
+  assert.equal(onBody.mock.calls.length, 0);
+  ret = await decode(Buffer.from('aaa'));
+  assert.equal(onBody.mock.calls.length, 1);
+  assert(!ret.complete);
+  assert.equal(ret.dataBuf.length, 0);
+  ret = await decode(Buffer.from('bbbb'));
+  assert.equal(ret.dataBuf.length, 0);
+  assert.equal(onHeader.mock.calls.length, 1);
+  assert.equal(onBody.mock.calls.length, 2);
+  assert.equal(onBody.mock.calls[0].arguments[0].toString(), 'aaa');
+  assert.equal(onBody.mock.calls[1].arguments[0].toString(), 'bbbb');
+});

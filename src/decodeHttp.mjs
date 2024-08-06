@@ -169,9 +169,10 @@ const decodeHttp = ({
   };
 
   const parseHeaders = async () => {
-    let isHeaderComplete = isHeaderPraseComplete();
+    assert(!isHeaderPraseComplete());
     assert(state.timeOnHeadersEnd == null);
     assert(state.timeOnStartlineEnd != null);
+    let isHeaderComplete = false;
     if (state.timeOnHeadersStart == null) {
       state.timeOnHeadersStart = performance.now();
     }
@@ -230,7 +231,7 @@ const decodeHttp = ({
         }
       }
       if (isHttpStream(state.headers)) {
-        if (state.statusCode === 200) {
+        if (state.statusCode === 200 || state.statusCode === 101) {
           assert(typeof onBody === 'function');
         } else {
           state.headers['content-length'] = 0;
