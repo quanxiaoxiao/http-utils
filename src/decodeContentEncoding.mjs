@@ -5,23 +5,23 @@ import {
   brotliDecompressSync,
 } from 'node:zlib';
 
-export default (chunk, encoding) => {
+export default (chunk, contentEncoding) => {
   assert(Buffer.isBuffer(chunk));
 
   if (chunk.length === 0) {
     return Buffer.from([]);
   }
 
-  if (encoding == null) {
+  if (!contentEncoding) {
     return chunk;
   }
 
-  if (/^gzip$/i.test(encoding)) {
+  if (/^gzip$/i.test(contentEncoding)) {
     return unzipSync(chunk);
   }
-
-  if (/^br$/i.test(encoding)) {
+  if (/^br$/i.test(contentEncoding)) {
     return brotliDecompressSync(chunk);
   }
+
   return chunk;
 };

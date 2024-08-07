@@ -19,6 +19,7 @@ import parseHttpPath from './parseHttpPath.mjs';
 import hasHttpBodyContent from './hasHttpBodyContent.mjs';
 import parseContentRange from './parseContentRange.mjs';
 import isWebSocketRequest from './isWebSocketRequest.mjs';
+import encodeContentEncoding from './encodeContentEncoding.mjs';
 
 import isHttpStream from './isHttpStream.mjs';
 
@@ -30,6 +31,7 @@ export {
   setHeaders,
   getHeaderValue,
   decodeContentEncoding,
+  encodeContentEncoding,
   decodeContentToJSON,
   getCurrentDateName,
   encodeHttp,

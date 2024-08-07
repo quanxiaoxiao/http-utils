@@ -45,6 +45,26 @@ test('decodeContentEncoding', () => {
   assert(Buffer.from('aaa')
     .equals(decodeContentEncoding(
       Buffer.from('aaa'),
+      'br, gzip',
+    )));
+  assert(Buffer.from('aaa')
+    .equals(decodeContentEncoding(
+      Buffer.from('aaa'),
+      'gzip, br',
+    )));
+  assert(Buffer.from('aaa')
+    .equals(decodeContentEncoding(
+      Buffer.from('aaa'),
       'xxxx',
+    )));
+  assert(Buffer.from('aaa')
+    .equals(decodeContentEncoding(
+      Buffer.from('aaa'),
+      'gzips',
+    )));
+  assert(Buffer.from('aaa')
+    .equals(decodeContentEncoding(
+      Buffer.from('aaa'),
+      'brs',
     )));
 });
