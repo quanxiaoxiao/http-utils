@@ -1,5 +1,6 @@
 import { parse } from 'node:url';
 import { HttpUrlParseError } from './errors.mjs';
+import isValidPort from './isValidPort.mjs';
 
 export default (href) => {
   if (!/^https?:\/\/\w+/.test(href)) {
@@ -22,7 +23,7 @@ export default (href) => {
   if (p == null) {
     p = protocol === 'https:' ? 443 : 80;
   }
-  if (p <= 0 || p > 65535 || Number.isNaN(p)) {
+  if (!isValidPort(p)) {
     throw new HttpUrlParseError(`port \`${p}\` invalid`);
   }
   return {

@@ -20,12 +20,14 @@ import hasHttpBodyContent from './hasHttpBodyContent.mjs';
 import parseContentRange from './parseContentRange.mjs';
 import isWebSocketRequest from './isWebSocketRequest.mjs';
 import encodeContentEncoding from './encodeContentEncoding.mjs';
+import isValidPort from './isValidPort.mjs';
 
 import isHttpStream from './isHttpStream.mjs';
 
 export {
   convertObjectToArray,
   convertArrayToObject,
+  isValidPort,
   parseCookie,
   filterHeaders,
   setHeaders,
