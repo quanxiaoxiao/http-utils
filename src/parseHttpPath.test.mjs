@@ -16,4 +16,8 @@ test('parseHttpPath', () => {
     ['/api/requests', 'keywords=%2F%28.%2A%29%2Fdefatt&method=', { method: '', keywords: '/(.*)/defatt' }],
   );
   assert.deepEqual(parseHttpPath('/?name='), ['/', 'name=', { name: '' }]);
+  assert.deepEqual(
+    parseHttpPath('/api/requests?keywords=aa+bbb&method='),
+    ['/api/requests', 'keywords=aa+bbb&method=', { method: '', keywords: 'aa+bbb' }],
+  );
 });

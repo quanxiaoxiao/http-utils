@@ -8,6 +8,8 @@ const generatePathname = (s) => {
   return s;
 };
 
+const codeWithPlus = encodeURIComponent('+');
+
 export default (path) => {
   assert(typeof path === 'string');
   if (!path) {
@@ -22,5 +24,10 @@ export default (path) => {
   if (!querystring) {
     return [generatePathname(pathname), '', {}];
   }
-  return [generatePathname(pathname), querystring, qs.parse(querystring)];
+  const query = qs.parse(querystring.replace(/\+/g, () => codeWithPlus));
+  return [
+    generatePathname(pathname),
+    querystring,
+    query,
+  ];
 };
