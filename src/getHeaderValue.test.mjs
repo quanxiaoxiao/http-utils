@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import test from 'node:test';
+
 import getHeaderValue from './getHeaderValue.mjs';
 
 test('getHeaderValue', () => {

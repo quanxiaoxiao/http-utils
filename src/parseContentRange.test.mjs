@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import test from 'node:test';
+
 import parseContentRange from './parseContentRange.mjs';
 
 test('parseContentRange', () => {
@@ -54,4 +55,3 @@ test('parseContentRange', () => {
     [5, 8],
   );
 });
-

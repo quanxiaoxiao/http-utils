@@ -1,10 +1,11 @@
-import { Buffer } from 'node:buffer';
-import { PassThrough } from 'node:stream';
-import { test, mock } from 'node:test';
-import http from 'node:http';
 import assert from 'node:assert';
-import { EncodeHttpError } from './errors.mjs';
+import { Buffer } from 'node:buffer';
+import http from 'node:http';
+import { PassThrough } from 'node:stream';
+import { mock,test } from 'node:test';
+
 import encodeHttp from './encodeHttp.mjs';
+import { EncodeHttpError } from './errors.mjs';
 
 test('encodeHttp', () => {
   assert.equal(

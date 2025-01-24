@@ -1,7 +1,8 @@
 import assert from 'node:assert';
+import qs from 'node:querystring';
 import test from 'node:test';
 import { gzipSync } from 'node:zlib';
-import qs from 'node:querystring';
+
 import decodeContentToJSON from './decodeContentToJSON.mjs';
 
 test('decodeContentToJSON', () => {

@@ -1,5 +1,7 @@
 import assert from 'node:assert';
+
 import _ from 'lodash';
+
 import isHttpStream from './isHttpStream.mjs';
 
 export default (headers) => {

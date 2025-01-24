@@ -1,6 +1,8 @@
-import qs from 'node:querystring';
 import assert from 'node:assert';
+import qs from 'node:querystring';
+
 import _ from 'lodash';
+
 import decodeContentEncoding from './decodeContentEncoding.mjs';
 
 export default (chunk, headers) => {

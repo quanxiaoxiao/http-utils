@@ -1,5 +1,5 @@
-import qs from 'node:querystring';
 import assert from 'node:assert';
+import qs from 'node:querystring';
 
 const generatePathname = (s) => {
   if (s[0] !== '/') {

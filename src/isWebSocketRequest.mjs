@@ -12,4 +12,4 @@ export default ({
     return false;
   }
   return /^websocket$/i.test(headers.upgrade);
-}
+};

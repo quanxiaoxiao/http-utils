@@ -1,8 +1,10 @@
-import { test, mock } from 'node:test';
 import assert from 'node:assert';
+import { mock,test } from 'node:test';
+
 import { waitFor } from '@quanxiaoxiao/utils';
-import { DecodeHttpError } from './errors.mjs';
+
 import { decodeHttpRequest, decodeHttpResponse } from './decodeHttp.mjs';
+import { DecodeHttpError } from './errors.mjs';
 
 test('decodeHttp > decodeHttpRequest check input', async () => {
   try {

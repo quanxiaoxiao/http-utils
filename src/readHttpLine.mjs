@@ -1,5 +1,6 @@
-import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
+import { Buffer } from 'node:buffer';
+
 import { DecodeHttpError } from './errors.mjs';
 
 const MAX_LINE_SIZE = 65535;

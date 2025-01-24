@@ -5,4 +5,4 @@ export default (port) =>  {
     && value >= 0
     && value <= 65535
   );
-}
+};

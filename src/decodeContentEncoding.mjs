@@ -1,8 +1,8 @@
 import assert from 'node:assert';
 import { Buffer } from 'node:buffer';
 import {
-  unzipSync,
   brotliDecompressSync,
+  unzipSync,
 } from 'node:zlib';
 
 export default (chunk, contentEncoding) => {

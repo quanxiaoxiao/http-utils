@@ -1,11 +1,13 @@
 /* eslint prefer-destructuring: 0 */
-import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
+import { Buffer } from 'node:buffer';
+
 import { parseInteger } from '@quanxiaoxiao/utils';
-import readHttpLine from './readHttpLine.mjs';
+
 import { DecodeHttpError } from './errors.mjs';
 import isHttpStream from './isHttpStream.mjs';
 import isWebSocketRequest from './isWebSocketRequest.mjs';
+import readHttpLine from './readHttpLine.mjs';
 
 const crlf = Buffer.from([0x0d, 0x0a]);
 const MAX_CHUNK_SIZE = 1024 * 1024 * 800;

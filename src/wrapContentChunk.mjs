@@ -1,5 +1,5 @@
-import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
+import { Buffer } from 'node:buffer';
 
 const crlf = Buffer.from('\r\n');
 const MAX_CHUNK_SIZE = 65535;

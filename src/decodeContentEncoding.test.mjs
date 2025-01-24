@@ -1,10 +1,11 @@
 import assert from 'node:assert';
-import test from 'node:test';
 import { Buffer } from 'node:buffer';
+import test from 'node:test';
 import {
-  gzipSync,
   brotliCompressSync,
+  gzipSync,
 } from 'node:zlib';
+
 import decodeContentEncoding from './decodeContentEncoding.mjs';
 
 test('decodeContentEncoding', () => {

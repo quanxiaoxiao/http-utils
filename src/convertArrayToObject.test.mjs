@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import test from 'node:test';
+
 import convertArrayToObject from './convertArrayToObject.mjs';
 
 test('convertArrayToObject', () => {

@@ -1,12 +1,13 @@
-import test from 'node:test';
 import assert from 'node:assert';
-import readHttpLine from './readHttpLine.mjs';
+import test from 'node:test';
+
 import { DecodeHttpError } from './errors.mjs';
+import readHttpLine from './readHttpLine.mjs';
 
 test('readHttpLine', () => {
   assert.throws(
     () => {
-    readHttpLine('aaa');
+      readHttpLine('aaa');
     },
     (error) => error instanceof assert.AssertionError,
   );

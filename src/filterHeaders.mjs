@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+
 import { escapeString } from '@quanxiaoxiao/utils';
 
 export default (headers, keys) => {

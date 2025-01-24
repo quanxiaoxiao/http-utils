@@ -1,15 +1,17 @@
 /* eslint no-nested-ternary: 0 */
-import { Buffer } from 'node:buffer';
 import assert from 'node:assert';
+import { Buffer } from 'node:buffer';
 import { Readable } from 'node:stream';
+
 import _ from 'lodash';
-import { EncodeHttpError } from './errors.mjs';
+
 import convertObjectToArray from './convertObjectToArray.mjs';
-import filterHeaders from './filterHeaders.mjs';
 import encodeHttpHeaders from './encodeHttpHeaders.mjs';
-import wrapContentChunk from './wrapContentChunk.mjs';
 import encodeHttpStartLine from './encodeHttpStartLine.mjs';
+import { EncodeHttpError } from './errors.mjs';
+import filterHeaders from './filterHeaders.mjs';
 import getHeaderValue from './getHeaderValue.mjs';
+import wrapContentChunk from './wrapContentChunk.mjs';
 
 const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
 
@@ -189,16 +191,16 @@ const handleWithContentChunkStream = ({
   keyValuePairList.push('chunked');
 
   if (onHeader) {
-   onHeader(Buffer.concat([
-     ...onStartLine ? [] : [encodeHttpStartLine({
-       method,
-       path,
-       httpVersion,
-       statusCode,
-       statusText,
-     })],
-     encodeHttpHeaders(keyValuePairList),
-   ]));
+    onHeader(Buffer.concat([
+      ...onStartLine ? [] : [encodeHttpStartLine({
+        method,
+        path,
+        httpVersion,
+        statusCode,
+        statusText,
+      })],
+      encodeHttpHeaders(keyValuePairList),
+    ]));
   }
   return (data) => {
     assert(!state.complete);

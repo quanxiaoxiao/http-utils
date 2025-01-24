@@ -1,7 +1,9 @@
 import assert from 'node:assert';
+
 import _ from 'lodash';
-import filterHeaders from './filterHeaders.mjs';
+
 import convertObjectToArray from './convertObjectToArray.mjs';
+import filterHeaders from './filterHeaders.mjs';
 
 export default (headers, obj) => {
   assert(Array.isArray(headers));

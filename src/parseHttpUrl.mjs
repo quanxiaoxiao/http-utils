@@ -1,4 +1,5 @@
 import { parse } from 'node:url';
+
 import { HttpUrlParseError } from './errors.mjs';
 import isValidPort from './isValidPort.mjs';
 

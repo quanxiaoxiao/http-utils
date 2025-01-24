@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+
 import createError from './createError.mjs';
 
 const calcNumber = (str) => {
