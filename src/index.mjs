@@ -15,8 +15,8 @@ import getCurrentDateName from './getCurrentDateName.mjs';
 import getHeaderValue from './getHeaderValue.mjs';
 import hasHttpBodyContent from './hasHttpBodyContent.mjs';
 import isHttpStream from './isHttpStream.mjs';
+import isHttpWebSocketUpgrade from './isHttpWebSocketUpgrade.mjs';
 import isValidPort from './isValidPort.mjs';
-import isWebSocketRequest from './isWebSocketRequest.mjs';
 import parseContentRange from './parseContentRange.mjs';
 import parseCookie from './parseCookie.mjs';
 import parseHttpPath from './parseHttpPath.mjs';
@@ -40,8 +40,8 @@ export {
   hasHttpBodyContent,
   HttpUrlParseError,
   isHttpStream,
+  isHttpWebSocketUpgrade,
   isValidPort,
-  isWebSocketRequest,
   parseContentRange,
   parseCookie,
   parseHttpPath,
