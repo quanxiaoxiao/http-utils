@@ -1,8 +1,6 @@
 import assert from 'node:assert';
 
-import { select } from '@quanxiaoxiao/datav';
-
-const toInteger = select({ type: 'integer' });
+import { parseInteger } from '@quanxiaoxiao/utils';
 
 export default (arr) => {
   assert(Array.isArray(arr));
@@ -23,7 +21,7 @@ export default (arr) => {
         result[key] = [result[key], decodeURIComponent(value)];
       }
     } else {
-      result[key] = key === 'content-length' ? toInteger(value) : decodeURIComponent(value);
+      result[key] = key === 'content-length' ? parseInteger(value) : decodeURIComponent(value);
     }
   }
 

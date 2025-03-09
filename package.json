@@ -24,7 +24,6 @@
     "node": ">= 20.0.0"
   },
   "dependencies": {
-    "@quanxiaoxiao/datav": "^0.3.2",
     "@quanxiaoxiao/utils": "^0.16.0",
     "lodash": "^4.17.21"
   }

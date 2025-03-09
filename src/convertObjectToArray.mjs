@@ -1,6 +1,9 @@
-import { select } from '@quanxiaoxiao/datav';
-
-const toString = select({ type: 'string' });
+const toString = (v) => {
+  if (typeof v !== 'string') {
+    return v.toString ? `${v.toString()}` : JSON.stringify(v);
+  }
+  return v;
+};
 
 export default (obj) => {
   if (Array.isArray(obj)) {
