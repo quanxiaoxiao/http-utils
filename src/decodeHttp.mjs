@@ -65,11 +65,12 @@ const decodeHttp = ({
       complete: isBodyParseComplete(),
       dataBuf: state.dataBuf,
       timeOnStartline: null,
-      timeOnHeaders: null,
-      timeOnBody: null,
       timeOnStartlineEnd: null,
       timeOnHeadersStart: null,
+      timeOnHeaders: null,
+      timeOnHeadersEnd: null,
       timeOnBodyStart: null,
+      timeOnBody: null,
       timeOnBodyEnd: null,
     };
 
@@ -418,12 +419,6 @@ const decodeHttp = ({
   };
 };
 
-export const decodeHttpRequest = (options) => decodeHttp({
-  ...options || {},
-  isRequest: true,
-});
+export const decodeHttpRequest = (options) => decodeHttp({ ...options || {}, isRequest: true });
 
-export const decodeHttpResponse = (options) => decodeHttp({
-  ...options || {},
-  isRequest: false,
-});
+export const decodeHttpResponse = (options) => decodeHttp({ ...options || {}, isRequest: false });

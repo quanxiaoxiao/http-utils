@@ -4,7 +4,11 @@ import { Buffer } from 'node:buffer';
 import { DecodeHttpError } from './errors.mjs';
 
 const MAX_LINE_SIZE = 65535;
-const crlf = Buffer.from([0x0d, 0x0a]);
+const CRLF = Buffer.from([0x0d, 0x0a]);
+
+function throwDecodeHttpError(message) {
+  throw new DecodeHttpError(message ? `Decode Http Error, ${message}` : 'Decode Http Error');
+}
 
 export default (
   buf,
@@ -22,8 +26,8 @@ export default (
 
   assert(start <= len - 1);
 
-  if (buf[start] === crlf[1]) {
-    throw new DecodeHttpError(message ? `Decode Http Error, ${message}` : 'Decode Http Error');
+  if (buf[start] === CRLF[1]) {
+    throwDecodeHttpError(message);
   }
   if (len === 1) {
     return null;
@@ -33,9 +37,9 @@ export default (
   const end = Math.min(len, start + limit + 1);
   while (i < end) {
     const b = buf[i];
-    if (b === crlf[1]) {
-      if (i === start || buf[i - 1] !== crlf[0]) {
-        throw new DecodeHttpError(message ? `Decode Http Error, ${message}` : 'Decode Http Error');
+    if (b === CRLF[1]) {
+      if (i === start || buf[i - 1] !== CRLF[0]) {
+        throwDecodeHttpError(message);
       }
       index = i;
       break;
@@ -44,7 +48,7 @@ export default (
   }
   if (index === -1) {
     if (len - start >= limit) {
-      throw new DecodeHttpError(message ? `Decode Http Error, ${message}` : 'Decode Http Error');
+      throwDecodeHttpError(message);
     }
     return null;
   }
