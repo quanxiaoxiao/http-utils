@@ -22,7 +22,7 @@ export default ({
     result.push(`HTTP/${version}`);
     result.push(`${code}`);
     if ((typeof statusText) !== 'undefined') {
-      if (statusText != '' && statusText != null) {
+      if (statusText !== '' && statusText != null) {
         result.push(statusText);
       }
     } else if (http.STATUS_CODES[code]) {

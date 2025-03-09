@@ -223,7 +223,7 @@ const handleWithContentChunkStream = ({
           BODY_CHUNK_END,
         ]);
       }
-      return  BODY_CHUNK_END;
+      return BODY_CHUNK_END;
     }
     const chunkSize = chunk.length;
     if (state.contentChunkLength === 0) {

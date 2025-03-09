@@ -32,7 +32,7 @@ export default (str, contentSize) => {
     }
   } else {
     ranges.start = calcNumber(matches[1].trim());
-    if (matches[2] != '') {
+    if (matches[2] !== '') {
       ranges.end = calcNumber(matches[2]);
     }
   }
