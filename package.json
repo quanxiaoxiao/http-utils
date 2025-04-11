@@ -1,6 +1,6 @@
 {
   "name": "@quanxiaoxiao/http-utils",
-  "version": "0.31.0",
+  "version": "0.32.0",
   "type": "module",
   "scripts": {
     "test": "node --test",
