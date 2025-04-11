@@ -5,7 +5,7 @@ import _ from 'lodash';
 
 import decodeContentEncoding from './decodeContentEncoding.mjs';
 
-export default (chunk, headers, handler) => {
+export default (chunk, headers) => {
   assert(_.isPlainObject(headers));
   if (!chunk
     || chunk.length === 0
@@ -14,13 +14,10 @@ export default (chunk, headers, handler) => {
     return null;
   }
   try {
-    let content = decodeContentEncoding(
+    const content = decodeContentEncoding(
       chunk,
       headers['content-encoding'],
     );
-    if (handler) {
-      content = handler(content);
-    }
     if (/\/json/i.test(headers['content-type'])) {
       return JSON.parse(content.toString());
     }
