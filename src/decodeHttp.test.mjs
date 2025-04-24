@@ -246,6 +246,17 @@ test('decodeHttp > decodeHttpRequest headers 2', async () => {
   assert.deepEqual(ret.headers, {});
 });
 
+test('decodeHttp > decodeHttpRequest headers 4', async () => {
+  const decode = decodeHttpRequest();
+  await decode(Buffer.from('GET / HTTP/1.1\r\n'));
+  await decode(Buffer.from('auth:111\r\n'));
+  await decode(Buffer.from('Auth:111\r\n'));
+  const ret = await decode(Buffer.from('bar:ss\r\n'));
+  assert.deepEqual(ret.headers, { auth: ['111', '111'], bar: 'ss' });
+  assert.equal(ret.dataBuf.length, 0);
+  assert(!ret.complete);
+});
+
 test('decodeHttp > decodeHttpRequest onHeader', async () => {
   const onHeader = mock.fn((state) => {
     assert.deepEqual(state.headers, { name: 'bbb', 'content-length': 0 });

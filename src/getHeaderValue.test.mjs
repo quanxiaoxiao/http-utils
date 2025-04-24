@@ -8,11 +8,11 @@ test('getHeaderValue', () => {
     getHeaderValue();
   });
   assert.throws(() => {
-    getHeaderValue({ name: 'xx' }, 'name');
-  });
-  assert.throws(() => {
     getHeaderValue([], '');
   });
+  assert.equal(getHeaderValue({ Name: 'xx' }, 'name'), 'xx');
+  assert.equal(getHeaderValue({ name: 'xx' }, 'Name'), 'xx');
+  assert.deepEqual(getHeaderValue({ name: 'xx', Name: 'sss' }, 'NAME'), ['xx', 'sss']);
   assert.equal(getHeaderValue([], 'name'), null);
   assert.equal(getHeaderValue(['age', '33', 'name', 'quan'], 'name'), 'quan');
   assert.equal(getHeaderValue(['age', '33', 'name', 'quan'], 'na'), null);

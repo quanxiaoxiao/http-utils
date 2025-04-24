@@ -13,10 +13,12 @@ import {
 import filterHeaders from './filterHeaders.mjs';
 import getCurrentDateName from './getCurrentDateName.mjs';
 import getHeaderValue from './getHeaderValue.mjs';
+import hasHeaderKey from './hasHeaderKey.mjs';
 import hasHttpBodyContent from './hasHttpBodyContent.mjs';
 import isHttpStream from './isHttpStream.mjs';
 import isHttpWebSocketUpgrade from './isHttpWebSocketUpgrade.mjs';
 import isValidPort from './isValidPort.mjs';
+import omitHeaderKeys from './omitHeaderKeys.mjs';
 import parseContentRange from './parseContentRange.mjs';
 import parseCookie from './parseCookie.mjs';
 import parseHttpPath from './parseHttpPath.mjs';
@@ -37,11 +39,13 @@ export {
   filterHeaders,
   getCurrentDateName,
   getHeaderValue,
+  hasHeaderKey,
   hasHttpBodyContent,
   HttpUrlParseError,
   isHttpStream,
   isHttpWebSocketUpgrade,
   isValidPort,
+  omitHeaderKeys,
   parseContentRange,
   parseCookie,
   parseHttpPath,
