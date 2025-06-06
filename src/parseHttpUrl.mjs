@@ -12,6 +12,7 @@ export default (href) => {
     path,
     port,
     hostname,
+    hash,
   } = parse(href);
   if (!hostname) {
     throw new HttpUrlParseError(`href \`${href}\` invalid`);
@@ -32,5 +33,6 @@ export default (href) => {
     hostname,
     port: p,
     path: path || '/',
+    hash,
   };
 };

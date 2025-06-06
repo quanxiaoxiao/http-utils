@@ -11,29 +11,34 @@ test('parseHttpUrl', () => {
     protocol: 'http:',
     port: 80,
     path: '/',
+    hash: null,
     hostname: 'www.aa.com',
   });
   assert.deepEqual(parseHttpUrl('http://www.aa.com:6666'), {
     protocol: 'http:',
     port: 6666,
     path: '/',
+    hash: null,
     hostname: 'www.aa.com',
   });
   assert.deepEqual(parseHttpUrl('http://www.aa.com:6666/'), {
     protocol: 'http:',
     port: 6666,
     path: '/',
+    hash: null,
     hostname: 'www.aa.com',
   });
   assert.deepEqual(parseHttpUrl('http://www.aa.com:6666/aaa/'), {
     protocol: 'http:',
     port: 6666,
     path: '/aaa/',
+    hash: null,
     hostname: 'www.aa.com',
   });
   assert.deepEqual(parseHttpUrl('http://www.aa.com:6666/aaa'), {
     protocol: 'http:',
     port: 6666,
+    hash: null,
     path: '/aaa',
     hostname: 'www.aa.com',
   });
@@ -41,23 +46,27 @@ test('parseHttpUrl', () => {
     protocol: 'https:',
     port: 443,
     path: '/',
+    hash: null,
     hostname: 'www.aa.com',
   });
   assert.deepEqual(parseHttpUrl('https://www.aa.com:6666'), {
     protocol: 'https:',
     port: 6666,
+    hash: null,
     path: '/',
     hostname: 'www.aa.com',
   });
   assert.deepEqual(parseHttpUrl('https://www.aa.com:6666?name=aaa'), {
     protocol: 'https:',
     port: 6666,
+    hash: null,
     path: '/?name=aaa',
     hostname: 'www.aa.com',
   });
   assert.deepEqual(parseHttpUrl('https://www.aa.com:6666/quan?name=aaa'), {
     protocol: 'https:',
     port: 6666,
+    hash: null,
     path: '/quan?name=aaa',
     hostname: 'www.aa.com',
   });
