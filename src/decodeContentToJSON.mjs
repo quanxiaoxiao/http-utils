@@ -6,27 +6,28 @@ import _ from 'lodash';
 import decodeContentEncoding from './decodeContentEncoding.mjs';
 import getHeaderValue from './getHeaderValue.mjs';
 
-export default (chunk, headers) => {
-  assert(_.isPlainObject(headers));
+const SUPPORTED_CONTENT_TYPES = /application\/(json|x-www-form-urlencoded)\b/i;
+const JSON_CONTENT_TYPE = /\/json\b/i;
+
+export default function parseRequestBody(chunk, headers) {
+  assert(_.isPlainObject(headers), 'headers must be a plain object');
+
+  if (!chunk || chunk.length === 0) {
+    return null;
+  }
   const contentType = getHeaderValue(headers, 'content-type');
-  const contentEncoding = getHeaderValue(headers, 'content-encoding');
-  if (!chunk
-    || chunk.length === 0
-    || !contentType
-    || !/application\/(json|x-www-form-urlencoded)\b/i.test(contentType)
-  ) {
+  if (!contentType || !SUPPORTED_CONTENT_TYPES.test(contentType)) {
     return null;
   }
   try {
-    const content = decodeContentEncoding(
-      chunk,
-      contentEncoding,
-    );
-    if (/\/\bjson\b/i.test(contentType)) {
-      return JSON.parse(content.toString());
+    const contentEncoding = getHeaderValue(headers, 'content-encoding');
+    const decodedContent = decodeContentEncoding(chunk, contentEncoding);
+    const contentString = decodedContent.toString();
+    if (JSON_CONTENT_TYPE.test(contentType)) {
+      return JSON.parse(contentString);
     }
-    return qs.parse(content.toString());
+    return qs.parse(contentString);
   } catch (error) {
     return null;
   }
-};
+}
