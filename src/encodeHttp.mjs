@@ -41,23 +41,22 @@ const buildHttpHeader = ({
   return Buffer.concat(buffers);
 };
 
-const handleWithContentBody = ({
-  method,
-  path,
-  httpVersion,
-  statusCode,
-  statusText,
-  headers,
-  body,
-  onHeader,
-  onStartLine,
-}) => {
+const handleCompleteBody = (options) => {
+  const {
+    method,
+    path,
+    httpVersion,
+    statusCode,
+    statusText,
+    headers,
+    body,
+    onHeader,
+    onStartLine,
+  } = options;
   const keyValuePairList = [...headers];
   let contentLength = 0;
   keyValuePairList.push('Content-Length');
-  if (body == null) {
-    contentLength = 0;
-  } else {
+  if (body != null) {
     assert(Buffer.isBuffer(body) || typeof body === 'string');
     contentLength = Buffer.byteLength(body);
   }
@@ -65,16 +64,12 @@ const handleWithContentBody = ({
   const bufList = [];
 
   if (onHeader) {
-    onHeader(Buffer.concat([
-      ...onStartLine ? [] : [encodeHttpStartLine({
-        method,
-        path,
-        httpVersion,
-        statusCode,
-        statusText,
-      })],
-      encodeHttpHeaders(keyValuePairList),
-    ]));
+    const httpHeader = buildHttpHeader({
+      ...options,
+      headers: keyValuePairList,
+      includeStartLine: !onStartLine,
+    });
+    onHeader(httpHeader);
   } else {
     if (!onStartLine) {
       bufList.push(encodeHttpStartLine({
@@ -297,7 +292,7 @@ export default (options) => {
       }
       return handleWithContentChunkStream(baseOptions);
     }
-    return handleWithContentBody({
+    return handleCompleteBody({
       ...baseOptions,
       body: options.body,
     });
