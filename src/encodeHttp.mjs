@@ -149,14 +149,14 @@ const handleContentLengthStream = (options) => {
   }
   return (data) => {
     if (state.complete) {
-      assert(data == null);
+      assert(data == null, 'No data expected after completion');
       return Buffer.from([]);
     }
     assert(!state.complete);
     assert(Buffer.isBuffer(data) || typeof data === 'string');
     const chunk = Buffer.from(data);
     const chunkSize = chunk.length;
-    assert(chunkSize > 0);
+    assert(chunkSize > 0, 'Chunk size must be greater than 0');
     if (state.contentChunkLength + chunkSize > contentLength) {
       throw new EncodeHttpError(`Encoding Http Error, Content-Length exceed \`${contentLength}\``);
     }
@@ -166,17 +166,12 @@ const handleContentLengthStream = (options) => {
         state.complete = true;
       }
       if (!onHeader) {
-        return Buffer.concat([
-          ...onStartLine ? [] : [encodeHttpStartLine({
-            method,
-            path,
-            httpVersion,
-            statusCode,
-            statusText,
-          })],
-          encodeHttpHeaders(headersWithLength),
-          chunk,
-        ]);
+        const httpHeader = buildHttpHeader({
+          ...options,
+          headers: headersWithLength,
+          includeStartLine: !onStartLine,
+        });
+        return Buffer.concat([httpHeader, chunk]);
       }
       return chunk;
     }
