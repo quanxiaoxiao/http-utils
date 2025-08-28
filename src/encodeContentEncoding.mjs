@@ -21,6 +21,8 @@ export default (chunk, acceptEncoding) => {
     };
   }
 
+  assert(typeof acceptEncoding === 'string');
+
   const nameList = acceptEncoding.split(',');
   for (let i = 0; i < nameList.length; i++) {
     const name = nameList[i].trim();
