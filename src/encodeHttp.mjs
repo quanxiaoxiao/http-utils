@@ -54,8 +54,8 @@ const handleCompleteBody = (options) => {
     onStartLine,
   } = options;
   const keyValuePairList = [...headers];
-  let contentLength = 0;
   keyValuePairList.push('Content-Length');
+  let contentLength = 0;
   if (body != null) {
     assert(Buffer.isBuffer(body) || typeof body === 'string');
     contentLength = Buffer.byteLength(body);
@@ -85,10 +85,6 @@ const handleCompleteBody = (options) => {
 
   if (contentLength > 0) {
     bufList.push(Buffer.isBuffer(body) ? body : Buffer.from(body));
-  }
-
-  if (bufList.length === 0) {
-    return Buffer.from([]);
   }
 
   return Buffer.concat(bufList);
@@ -168,7 +164,7 @@ const handleContentLengthStream = (options) => {
   };
 };
 
-const handleWithContentChunkStream = ({
+const handleChunkedStream = ({
   method,
   path,
   httpVersion,
@@ -290,7 +286,7 @@ export default (options) => {
           contentLength: Number(contentLength),
         });
       }
-      return handleWithContentChunkStream(baseOptions);
+      return handleChunkedStream(baseOptions);
     }
     return handleCompleteBody({
       ...baseOptions,
@@ -305,5 +301,5 @@ export default (options) => {
     });
   }
 
-  return handleWithContentChunkStream(baseOptions);
+  return handleChunkedStream(baseOptions);
 };
