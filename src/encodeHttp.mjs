@@ -276,71 +276,39 @@ export default (options) => {
   const keyValuePairList = filterHeaders(httpHeaderList, FILTERED_HEADERS);
   const contentLength = getHeaderValue(httpHeaderList, 'content-length');
 
-  if (Object.hasOwnProperty.call(options, 'body')) {
-    if (options.body instanceof Readable) {
-      if (contentLength != null) {
-        return handleWithContentLengthStream({
-          contentLength: Number(contentLength),
-          method: options.method,
-          path: options.path,
-          httpVersion: options.httpVersion,
-          statusCode: options.statusCode,
-          statusText: options.statusText,
-          headers: keyValuePairList,
-          body: options.body,
-          onHeader: options.onHeader,
-          onStartLine: options.onStartLine,
-        });
-      }
-      return handleWithContentChunkStream({
-        method: options.method,
-        path: options.path,
-        httpVersion: options.httpVersion,
-        statusCode: options.statusCode,
-        statusText: options.statusText,
-        headers: keyValuePairList,
-        body: options.body,
-        onHeader: options.onHeader,
-        onStartLine: options.onStartLine,
-      });
-    }
-    return handleWithContentBody({
-      method: options.method,
-      path: options.path,
-      httpVersion: options.httpVersion,
-      statusCode: options.statusCode,
-      statusText: options.statusText,
-      headers: keyValuePairList,
-      body: options.body,
-      onHeader: options.onHeader,
-      onStartLine: options.onStartLine,
-    });
-  }
-
-  if (contentLength != null) {
-    return handleWithContentLengthStream({
-      contentLength: Number(contentLength),
-      method: options.method,
-      path: options.path,
-      httpVersion: options.httpVersion,
-      statusCode: options.statusCode,
-      statusText: options.statusText,
-      headers: keyValuePairList,
-      body: options.body,
-      onHeader: options.onHeader,
-      onStartLine: options.onStartLine,
-    });
-  }
-
-  return handleWithContentChunkStream({
+  const baseOptions = {
     method: options.method,
     path: options.path,
     httpVersion: options.httpVersion,
     statusCode: options.statusCode,
     statusText: options.statusText,
     headers: keyValuePairList,
-    body: options.body,
     onHeader: options.onHeader,
     onStartLine: options.onStartLine,
-  });
+  };
+
+  if (Object.hasOwnProperty.call(options, 'body')) {
+    if (options.body instanceof Readable) {
+      if (contentLength != null) {
+        return handleWithContentLengthStream({
+          ...baseOptions,
+          contentLength: Number(contentLength),
+        });
+      }
+      return handleWithContentChunkStream(baseOptions);
+    }
+    return handleWithContentBody({
+      ...baseOptions,
+      body: options.body,
+    });
+  }
+
+  if (contentLength != null) {
+    return handleWithContentLengthStream({
+      ...baseOptions,
+      contentLength: Number(contentLength),
+    });
+  }
+
+  return handleWithContentChunkStream(baseOptions);
 };
