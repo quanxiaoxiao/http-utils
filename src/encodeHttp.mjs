@@ -273,7 +273,7 @@ export default (options) => {
 
   assert(httpHeaderList.length % 2 === 0, 'Headers array must have even length');
 
-  const keyValuePairList = filterHeaders(httpHeaderList, FILTERED_HEADERS);
+  const filteredHeaders = filterHeaders(httpHeaderList, FILTERED_HEADERS);
   const contentLength = getHeaderValue(httpHeaderList, 'content-length');
 
   const baseOptions = {
@@ -282,7 +282,7 @@ export default (options) => {
     httpVersion: options.httpVersion,
     statusCode: options.statusCode,
     statusText: options.statusText,
-    headers: keyValuePairList,
+    headers: filteredHeaders,
     onHeader: options.onHeader,
     onStartLine: options.onStartLine,
   };
