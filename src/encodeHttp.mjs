@@ -166,11 +166,6 @@ const handleContentLengthStream = (options) => {
 
 const handleChunkedStream = (options) => {
   const {
-    method,
-    path,
-    httpVersion,
-    statusCode,
-    statusText,
     headers,
     onHeader,
     onStartLine,
@@ -196,43 +191,33 @@ const handleChunkedStream = (options) => {
       assert(Buffer.isBuffer(data) || typeof data === 'string');
     }
     const chunk = data != null ? Buffer.from(data) : null;
-    if (chunk == null || chunk.length === 0) {
+    const isEndChunk = chunk == null || chunk.length === 0;
+    if (isEndChunk) {
       state.complete = true;
       if (state.contentChunkLength === 0 && !onHeader) {
-        return Buffer.concat([
-          ...onStartLine ? [] : [encodeHttpStartLine({
-            method,
-            path,
-            httpVersion,
-            statusCode,
-            statusText,
-          })],
-          encodeHttpHeaders(keyValuePairList),
-          CHUNK_END_MARKER,
-        ]);
+        const httpHeader = buildHttpHeader({
+          ...options,
+          headers: keyValuePairList,
+          includeStartLine: !onStartLine,
+        });
+        return Buffer.concat([httpHeader, CHUNK_END_MARKER]);
       }
       return CHUNK_END_MARKER;
     }
-    const chunkSize = chunk.length;
-    if (state.contentChunkLength === 0) {
-      state.contentChunkLength = chunkSize;
-      if (!onHeader) {
-        return Buffer.concat([
-          ...onStartLine ? [] : [encodeHttpStartLine({
-            method,
-            path,
-            httpVersion,
-            statusCode,
-            statusText,
-          })],
-          encodeHttpHeaders(keyValuePairList),
-          wrapContentChunk(chunk),
-        ]);
-      }
-      return wrapContentChunk(chunk);
+
+    const isFirstChunk = state.contentChunkLength === 0;
+    state.contentChunkLength += chunk.length;
+    const wrappedChunk = wrapContentChunk(chunk);
+    if (isFirstChunk && !onHeader) {
+      const httpHeader = buildHttpHeader({
+        ...options,
+        headers: keyValuePairList,
+        includeStartLine: !onStartLine,
+      });
+      return Buffer.concat([httpHeader, wrappedChunk]);
     }
-    state.contentChunkLength += chunkSize;
-    return wrapContentChunk(chunk);
+
+    return wrappedChunk;
   };
 };
 
