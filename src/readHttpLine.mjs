@@ -16,11 +16,12 @@ export default (
   limit = MAX_LINE_SIZE,
   message = null,
 ) => {
-  assert(Buffer.isBuffer(buf));
-  assert(start >= 0);
+  assert(Buffer.isBuffer(buf), 'buf must be a Buffer');
+  assert(Number.isInteger(start) && start >= 0, 'start must be a non-negative integer');
+  assert(Number.isInteger(limit) && limit > 0, 'limit must be a positive integer');
   const len = buf.length;
   if (len === 0) {
-    assert(start === 0);
+    assert(start === 0, 'start must be 0 for empty buffer');
     return null;
   }
 
