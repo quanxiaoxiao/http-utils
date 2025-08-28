@@ -5,37 +5,71 @@ import {
   gzipSync,
 } from 'node:zlib';
 
+const MIN_COMPRESS_SIZE = 1024;
+
+const parseAcceptEncoding = (acceptEncoding) => {
+  const encodings = acceptEncoding
+    .split(',')
+    .map((item) => {
+      const parts = item.trim().split(';');
+      const encoding = parts[0].trim().toLowerCase();
+
+      let quality = 1.0;
+      for (let i = 1; i < parts.length; i++) {
+        const param = parts[i].trim();
+        if (param.startsWith('q=')) {
+          quality = parseFloat(param.substring(2)) || 0;
+          break;
+        }
+      }
+
+      return { encoding, quality };
+    })
+    .filter(item =>
+      item.quality > 0 &&
+      (item.encoding === 'gzip' || item.encoding === 'br'),
+    )
+    .sort((a, b) => {
+      if (a.quality !== b.quality) {
+        return b.quality - a.quality;
+      }
+      return a.encoding === 'br' ? -1 : 1;
+    });
+
+  return encodings.map((item) => item.encoding);
+};
+
 export default (chunk, acceptEncoding) => {
-  assert(Buffer.isBuffer(chunk));
-  if (!acceptEncoding) {
+  assert(Buffer.isBuffer(chunk), 'chunk must be a Buffer');
+  if (!acceptEncoding || chunk.length === 0) {
+    return {
+      name: null,
+      buf: chunk.length === 0 ? Buffer.alloc(0) : chunk,
+    };
+  }
+
+  if (chunk.length < MIN_COMPRESS_SIZE) {
     return {
       name: null,
       buf: chunk,
     };
   }
 
-  if (chunk.length === 0) {
-    return {
-      name: null,
-      buf: Buffer.from([]),
-    };
-  }
+  assert(typeof acceptEncoding === 'string', 'acceptEncoding must be a string');
 
-  assert(typeof acceptEncoding === 'string');
+  const encodings = parseAcceptEncoding(acceptEncoding);
 
-  const nameList = acceptEncoding.split(',');
-  for (let i = 0; i < nameList.length; i++) {
-    const name = nameList[i].trim();
-    if (/^gzip$/i.test(name)) {
-      return {
-        name: 'gzip',
-        buf: gzipSync(chunk),
-      };
-    }
-    if (/^br$/i.test(name)) {
+  for (const encoding of encodings) {
+    if (encoding === 'br') {
       return {
         name: 'br',
         buf: brotliCompressSync(chunk),
+      };
+    }
+    if (encoding === 'gzip') {
+      return {
+        name: 'gzip',
+        buf: gzipSync(chunk),
       };
     }
   }

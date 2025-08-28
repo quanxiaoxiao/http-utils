@@ -16,34 +16,45 @@ test('encodeContentEncoding', () => {
       .buf
       .equals(Buffer.from('xxx')),
   );
+  const buf = Buffer.alloc(1028).fill('xxx');
+  assert(
+    encodeContentEncoding(buf, 'gzip')
+      .buf
+      .equals(gzipSync(buf)),
+  );
   assert(
     encodeContentEncoding(Buffer.from('xxx'), 'gzip')
-      .buf
-      .equals(gzipSync(Buffer.from('xxx'))),
-  );
-  assert(
-    encodeContentEncoding(Buffer.from('xxx'), 'br, gzip')
-      .buf
-      .equals(brotliCompressSync(Buffer.from('xxx'))),
-  );
-  assert(
-    encodeContentEncoding(Buffer.from('xxx'), 'br,gzip')
-      .buf
-      .equals(brotliCompressSync(Buffer.from('xxx'))),
-  );
-  assert(
-    encodeContentEncoding(Buffer.from('xxx'), 'gzip, br')
-      .buf
-      .equals(gzipSync(Buffer.from('xxx'))),
-  );
-  assert(
-    encodeContentEncoding(Buffer.from('xxx'), 'gzipp, brr')
       .buf
       .equals(Buffer.from('xxx')),
   );
   assert(
-    encodeContentEncoding(Buffer.from('xxx'), 'brs, gzip')
+    encodeContentEncoding(Buffer.from('xxx'), 'br')
       .buf
-      .equals(gzipSync(Buffer.from('xxx'))),
+      .equals(Buffer.from('xxx')),
+  );
+  assert(
+    encodeContentEncoding(buf, 'br, gzip')
+      .buf
+      .equals(brotliCompressSync(buf)),
+  );
+  assert(
+    encodeContentEncoding(buf, 'br,gzip')
+      .buf
+      .equals(brotliCompressSync(buf)),
+  );
+  assert(
+    encodeContentEncoding(buf, 'gzip, br')
+      .buf
+      .equals(brotliCompressSync(buf)),
+  );
+  assert(
+    encodeContentEncoding(buf, 'gzipp, brr')
+      .buf
+      .equals(buf),
+  );
+  assert(
+    encodeContentEncoding(buf, 'brs, gzip')
+      .buf
+      .equals(gzipSync(buf)),
   );
 });
