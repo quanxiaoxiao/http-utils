@@ -13,7 +13,8 @@ import filterHeaders from './filterHeaders.mjs';
 import getHeaderValue from './getHeaderValue.mjs';
 import wrapContentChunk from './wrapContentChunk.mjs';
 
-const BODY_CHUNK_END = Buffer.from('0\r\n\r\n');
+const CHUNK_END_MARKER = Buffer.from('0\r\n\r\n');
+const FILTERED_HEADERS = ['content-length', 'transfer-encoding'];
 
 const handleWithContentBody = ({
   method,
@@ -220,10 +221,10 @@ const handleWithContentChunkStream = ({
             statusText,
           })],
           encodeHttpHeaders(keyValuePairList),
-          BODY_CHUNK_END,
+          CHUNK_END_MARKER,
         ]);
       }
-      return BODY_CHUNK_END;
+      return CHUNK_END_MARKER;
     }
     const chunkSize = chunk.length;
     if (state.contentChunkLength === 0) {
@@ -260,18 +261,19 @@ export default (options) => {
   }
 
   if (options.headers) {
-    assert(Array.isArray(options.headers) || _.isPlainObject(options.headers));
+    assert(
+      Array.isArray(options.headers) || _.isPlainObject(options.headers),
+      'Headers must be an array or plain object',
+    );
   }
 
-  const httpHeaderList = Array.isArray(options.headers) ? options.headers : convertObjectToArray(options.headers || {});
+  const httpHeaderList = Array.isArray(options.headers)
+    ? options.headers
+    : convertObjectToArray(options.headers || {});
 
-  assert(httpHeaderList.length % 2 === 0);
+  assert(httpHeaderList.length % 2 === 0, 'Headers array must have even length');
 
-  const keyValuePairList = filterHeaders(
-    httpHeaderList,
-    ['content-length', 'transfer-encoding'],
-  );
-
+  const keyValuePairList = filterHeaders(httpHeaderList, FILTERED_HEADERS);
   const contentLength = getHeaderValue(httpHeaderList, 'content-length');
 
   if (Object.hasOwnProperty.call(options, 'body')) {
