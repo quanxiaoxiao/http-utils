@@ -101,12 +101,7 @@ const handleWithContentBody = ({
 
 const handleContentLengthStream = (options) => {
   const {
-    method,
-    path,
-    httpVersion,
     contentLength,
-    statusCode,
-    statusText,
     headers,
     onHeader,
     onStartLine,
@@ -160,25 +155,20 @@ const handleContentLengthStream = (options) => {
     if (state.contentChunkLength + chunkSize > contentLength) {
       throw new EncodeHttpError(`Encoding Http Error, Content-Length exceed \`${contentLength}\``);
     }
-    if (state.contentChunkLength === 0) {
-      state.contentChunkLength += chunkSize;
-      if (state.contentChunkLength === contentLength) {
-        state.complete = true;
-      }
-      if (!onHeader) {
-        const httpHeader = buildHttpHeader({
-          ...options,
-          headers: headersWithLength,
-          includeStartLine: !onStartLine,
-        });
-        return Buffer.concat([httpHeader, chunk]);
-      }
-      return chunk;
-    }
+    const isFirstChunk = state.contentChunkLength === 0;
     state.contentChunkLength += chunkSize;
     if (state.contentChunkLength === contentLength) {
       state.complete = true;
     }
+    if (isFirstChunk && !onHeader) {
+      const httpHeader = buildHttpHeader({
+        ...options,
+        headers: headersWithLength,
+        includeStartLine: !onStartLine,
+      });
+      return Buffer.concat([httpHeader, chunk]);
+    }
+
     return chunk;
   };
 };
