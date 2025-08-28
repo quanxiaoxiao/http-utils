@@ -164,38 +164,34 @@ const handleContentLengthStream = (options) => {
   };
 };
 
-const handleChunkedStream = ({
-  method,
-  path,
-  httpVersion,
-  statusCode,
-  statusText,
-  headers,
-  onHeader,
-  onStartLine,
-}) => {
-  const keyValuePairList = [...headers];
+const handleChunkedStream = (options) => {
+  const {
+    method,
+    path,
+    httpVersion,
+    statusCode,
+    statusText,
+    headers,
+    onHeader,
+    onStartLine,
+  } = options;
   const state = {
     complete: false,
     contentChunkLength: 0,
   };
-  keyValuePairList.push('Transfer-Encoding');
-  keyValuePairList.push('chunked');
+  const keyValuePairList = [...headers, 'Transfer-Encoding', 'chunked'];
 
   if (onHeader) {
-    onHeader(Buffer.concat([
-      ...onStartLine ? [] : [encodeHttpStartLine({
-        method,
-        path,
-        httpVersion,
-        statusCode,
-        statusText,
-      })],
-      encodeHttpHeaders(keyValuePairList),
-    ]));
+    const httpHeader = buildHttpHeader({
+      ...options,
+      headers: keyValuePairList,
+      includeStartLine: !onStartLine,
+    });
+    onHeader(httpHeader);
   }
   return (data) => {
-    assert(!state.complete);
+    assert(!state.complete, 'Stream already completed');
+
     if (data != null) {
       assert(Buffer.isBuffer(data) || typeof data === 'string');
     }
