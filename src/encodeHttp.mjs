@@ -16,6 +16,31 @@ import wrapContentChunk from './wrapContentChunk.mjs';
 const CHUNK_END_MARKER = Buffer.from('0\r\n\r\n');
 const FILTERED_HEADERS = ['content-length', 'transfer-encoding'];
 
+const buildHttpHeader = ({
+  method,
+  path,
+  httpVersion,
+  statusCode,
+  statusText,
+  headers,
+  includeStartLine = true,
+}) => {
+  const buffers = [];
+
+  if (includeStartLine) {
+    buffers.push(encodeHttpStartLine({
+      method,
+      path,
+      httpVersion,
+      statusCode,
+      statusText,
+    }));
+  }
+
+  buffers.push(encodeHttpHeaders(headers));
+  return Buffer.concat(buffers);
+};
+
 const handleWithContentBody = ({
   method,
   path,
@@ -74,17 +99,18 @@ const handleWithContentBody = ({
   return Buffer.concat(bufList);
 };
 
-const handleWithContentLengthStream = ({
-  method,
-  path,
-  httpVersion,
-  contentLength,
-  statusCode,
-  statusText,
-  headers,
-  onHeader,
-  onStartLine,
-}) => {
+const handleContentLengthStream = (options) => {
+  const {
+    method,
+    path,
+    httpVersion,
+    contentLength,
+    statusCode,
+    statusText,
+    headers,
+    onHeader,
+    onStartLine,
+  } = options;
   if (!Number.isInteger(contentLength) || contentLength < 0) {
     throw new EncodeHttpError(`Encode Http Error, Content-Length \`${contentLength}\` invalid`);
   }
@@ -92,44 +118,33 @@ const handleWithContentLengthStream = ({
     complete: false,
     contentChunkLength: 0,
   };
-  const keyValuePairList = [...headers];
-  keyValuePairList.push('Content-Length');
-  keyValuePairList.push(contentLength);
+  const headersWithLength = [...headers, 'Content-Length', contentLength];
   if (onHeader) {
-    onHeader(Buffer.concat([
-      ...onStartLine ? [] : [encodeHttpStartLine({
-        method,
-        path,
-        httpVersion,
-        statusCode,
-        statusText,
-      })],
-      encodeHttpHeaders(keyValuePairList),
-    ]));
+    const httpHeader = buildHttpHeader({
+      ...options,
+      headers: headersWithLength,
+      includeStartLine: !onStartLine,
+    });
+    onHeader(httpHeader);
   }
   if (contentLength === 0) {
-    return (args) => {
-      if (args != null) {
-        assert(Buffer.isBuffer(args) || typeof args === 'string');
-        if (Buffer.byteLength(args) > 0) {
+    return (data) => {
+      if (data != null) {
+        assert(Buffer.isBuffer(data) || typeof data === 'string');
+        if (Buffer.byteLength(data) > 0) {
           throw new EncodeHttpError(`Encoding Http Error, Content-Length exceed \`${0}\``);
         }
       }
-      assert(!state.complete);
+      assert(!state.complete, 'Stream already completed');
       state.complete = true;
       if (onHeader) {
         return Buffer.from([]);
       }
-      return Buffer.concat([
-        ...onStartLine ? [] : [encodeHttpStartLine({
-          method,
-          path,
-          httpVersion,
-          statusCode,
-          statusText,
-        })],
-        encodeHttpHeaders(keyValuePairList),
-      ]);
+      return buildHttpHeader({
+        ...options,
+        headers: headersWithLength,
+        includeStartLine: !onStartLine,
+      });
     };
   }
   return (data) => {
@@ -159,7 +174,7 @@ const handleWithContentLengthStream = ({
             statusCode,
             statusText,
           })],
-          encodeHttpHeaders(keyValuePairList),
+          encodeHttpHeaders(headersWithLength),
           chunk,
         ]);
       }
@@ -290,7 +305,7 @@ export default (options) => {
   if (Object.hasOwnProperty.call(options, 'body')) {
     if (options.body instanceof Readable) {
       if (contentLength != null) {
-        return handleWithContentLengthStream({
+        return handleContentLengthStream({
           ...baseOptions,
           contentLength: Number(contentLength),
         });
@@ -304,7 +319,7 @@ export default (options) => {
   }
 
   if (contentLength != null) {
-    return handleWithContentLengthStream({
+    return handleContentLengthStream({
       ...baseOptions,
       contentLength: Number(contentLength),
     });
