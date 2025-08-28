@@ -2,33 +2,34 @@ import assert from 'node:assert';
 import http from 'node:http';
 
 const HTTP_VERSION = '1.1';
+const DEFAULT_STATUS_CODE = 200;
+const MIN_STATUS_CODE = 0;
+const MAX_STATUS_CODE = 999;
+
+const resolveStatusText = (statusText, statusCode) => {
+  if (statusText !== undefined) {
+    return (statusText && statusText.trim()) ? statusText : null;
+  }
+  return http.STATUS_CODES[statusCode] || null;
+};
 
 export default ({
   method,
-  path,
-  httpVersion,
+  path = '/',
+  httpVersion = HTTP_VERSION,
   statusCode,
   statusText,
-}) => {
-  const result = [];
-  const version = httpVersion || HTTP_VERSION;
+} = {}) => {
+  const version = `HTTP/${httpVersion}`;
   if (method) {
-    result.push(method.toUpperCase());
-    result.push(path || '/');
-    result.push(`HTTP/${version}`);
-  } else {
-    const code = statusCode == null ? 200 : statusCode;
-    assert(code >= 0 && code <= 999);
-    result.push(`HTTP/${version}`);
-    result.push(`${code}`);
-    if ((typeof statusText) !== 'undefined') {
-      if (statusText !== '' && statusText != null) {
-        result.push(statusText);
-      }
-    } else if (http.STATUS_CODES[code]) {
-      result.push(http.STATUS_CODES[code]);
-    }
+    return Buffer.from(`${method.toUpperCase()} ${path} ${version}\r\n`);
   }
+  const code = statusCode ?? DEFAULT_STATUS_CODE;
+  assert(Number.isInteger(code) && code >= MIN_STATUS_CODE && code <= MAX_STATUS_CODE, `Status code must be an integer between ${MIN_STATUS_CODE} and ${MAX_STATUS_CODE}, got: ${code}`);
+  const resolvedStatusText = resolveStatusText(statusText, code);
+  const statusLine = resolvedStatusText
+    ? `${version} ${code} ${resolvedStatusText}`
+    : `${version} ${code}`;
 
-  return Buffer.from(`${result.join(' ')}\r\n`);
+  return Buffer.from(`${statusLine}\r\n`);
 };
