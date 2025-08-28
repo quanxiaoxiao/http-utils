@@ -48,14 +48,14 @@ export default (chunk, acceptEncoding) => {
     };
   }
 
+  assert(typeof acceptEncoding === 'string', 'acceptEncoding must be a string');
+
   if (chunk.length < MIN_COMPRESS_SIZE) {
     return {
       name: null,
       buf: chunk,
     };
   }
-
-  assert(typeof acceptEncoding === 'string', 'acceptEncoding must be a string');
 
   const encodings = parseAcceptEncoding(acceptEncoding);
 
