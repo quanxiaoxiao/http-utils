@@ -192,7 +192,7 @@ const decodeHttp = ({
   const processHeaderLine = (chunk) => {
     const indexSplit = chunk.findIndex((b) => b === COLON_CHAR_CODE);
     if (indexSplit === -1) {
-      throwDecodeHttpError('parse headers fail');
+      throwDecodeHttpError('invalid header format: missing colon');
     }
     const headerKey = chunk.slice(0, indexSplit).toString().trim();
     const headerValue = chunk.slice(indexSplit + 1).toString().trim();
