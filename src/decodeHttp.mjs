@@ -151,14 +151,17 @@ const decodeHttp = ({
       return;
     }
     const len = chunk.length;
-    const matches = chunk.toString().match(state.isRequest ? REQUEST_STARTLINE_REG : RESPONSE_STARTLINE_REG);
+    const line = chunk.toString();
+    const regex = state.isRequest ? REQUEST_STARTLINE_REG : RESPONSE_STARTLINE_REG;
+    const matches = line.match(regex);
+
     if (!matches) {
       throwDecodeHttpError('invalid start line format');
     }
+
     if (state.isRequest) {
-      state.method = matches[1].toUpperCase();
-      state.path = matches[2];
-      state.httpVersion = matches[3];
+      [, state.method, state.path, state.httpVersion] = matches;
+      state.method = state.method.toUpperCase();
     } else {
       if (matches[3]) {
         if (matches[3][0] !== ' ') {
