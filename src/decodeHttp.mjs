@@ -163,19 +163,20 @@ const decodeHttp = ({
       [, state.method, state.path, state.httpVersion] = matches;
       state.method = state.method.toUpperCase();
     } else {
-      if (matches[3]) {
-        if (matches[3][0] !== ' ') {
-          throwDecodeHttpError('parse start line fail');
+      const [, httpVersion, statusCodeStr, statusTextPart] = matches;
+      state.httpVersion = httpVersion;
+      state.statusCode = parseInteger(statusCodeStr);
+      if (state.statusCode == null) {
+        throwDecodeHttpError('invalid status code');
+      }
+      if (statusTextPart) {
+        if (statusTextPart[0] !== ' ') {
+          throwDecodeHttpError('invalid status text format');
         }
-        const statusText = matches[3].trim();
+        const statusText = statusTextPart.trim();
         if (statusText !== '') {
           state.statusText = statusText;
         }
-      }
-      state.httpVersion = matches[1];
-      state.statusCode = parseInteger(matches[2]);
-      if (state.statusCode == null) {
-        throwDecodeHttpError('invalid status text format');
       }
     }
 
