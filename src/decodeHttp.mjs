@@ -141,24 +141,19 @@ const decodeHttp = ({
   };
 
   const parseStartLine = async () => {
-    assert(state.step === 0);
+    assert(state.step === STEP.PARSE_STARTLINE);
     assert(state.timeOnStartlineEnd == null);
     if (state.timeOnStartlineStart == null) {
       state.timeOnStartlineStart = performance.now();
     }
-    const chunk = readHttpLine(
-      state.dataBuf,
-      0,
-      65535,
-      'parse startline line',
-    );
+    const chunk = readHttpLine(state.dataBuf, 0, 65535, 'parse startline line');
     if (!chunk) {
       return;
     }
     const len = chunk.length;
     const matches = chunk.toString().match(state.isRequest ? REQUEST_STARTLINE_REG : RESPONSE_STARTLINE_REG);
     if (!matches) {
-      throwDecodeHttpError('parse start line fail');
+      throwDecodeHttpError('invalid start line format');
     }
     if (state.isRequest) {
       state.method = matches[1].toUpperCase();
