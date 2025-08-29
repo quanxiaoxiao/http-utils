@@ -189,6 +189,36 @@ const decodeHttp = ({
     }
   };
 
+  const processHeaderLine = (chunk) => {
+    const indexSplit = chunk.findIndex((b) => b === COLON_CHAR_CODE);
+    if (indexSplit === -1) {
+      throwDecodeHttpError('parse headers fail');
+    }
+    const headerKey = chunk.slice(0, indexSplit).toString().trim();
+    const headerValue = chunk.slice(indexSplit + 1).toString().trim();
+    if (headerKey !== '' && headerValue !== '') {
+      state.headersRaw.push(headerKey);
+      state.headersRaw.push(headerValue);
+      const headerName = headerKey.toLowerCase();
+      if (headerName === 'content-length') {
+        if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
+          throwDecodeHttpError('parse headers fail');
+        }
+        const contentLength = parseInteger(headerValue);
+        if (contentLength == null || contentLength < 0) {
+          throwDecodeHttpError('parse headers fail');
+        }
+        state.headers[headerName] = contentLength;
+      } else if (Object.hasOwnProperty.call(state.headers, headerName)) {
+        state.headers[headerName] = Array.isArray(state.headers[headerName])
+          ? [...state.headers[headerName], headerValue]
+          : [state.headers[headerName], headerValue];
+      } else {
+        state.headers[headerName] = headerValue;
+      }
+    }
+  };
+
   const parseHeaders = async () => {
     assert(state.step === STEP.PARSE_HEADERS);
     assert(state.timeOnHeadersEnd == null);
@@ -210,33 +240,7 @@ const decodeHttp = ({
       if (len === 0) {
         isHeaderComplete = true;
       } else {
-        const indexSplit = chunk.findIndex((b) => b === COLON_CHAR_CODE);
-        if (indexSplit === -1) {
-          throwDecodeHttpError('parse headers fail');
-        }
-        const headerKey = chunk.slice(0, indexSplit).toString().trim();
-        const headerValue = chunk.slice(indexSplit + 1).toString().trim();
-        if (headerKey !== '' && headerValue !== '') {
-          state.headersRaw.push(headerKey);
-          state.headersRaw.push(headerValue);
-          const headerName = headerKey.toLowerCase();
-          if (headerName === 'content-length') {
-            if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
-              throwDecodeHttpError('parse headers fail');
-            }
-            const contentLength = parseInteger(headerValue);
-            if (contentLength == null || contentLength < 0) {
-              throwDecodeHttpError('parse headers fail');
-            }
-            state.headers[headerName] = contentLength;
-          } else if (Object.hasOwnProperty.call(state.headers, headerName)) {
-            state.headers[headerName] = Array.isArray(state.headers[headerName])
-              ? [...state.headers[headerName], headerValue]
-              : [state.headers[headerName], headerValue];
-          } else {
-            state.headers[headerName] = headerValue;
-          }
-        }
+        processHeaderLine(chunk);
       }
     }
 
