@@ -288,35 +288,37 @@ const decodeHttp = ({
   const parseBodyWithContentLength = async () => {
     const contentLength = state.headers['content-length'];
     assert(contentLength >= 0);
-    if (contentLength !== 0) {
-      if (state.bodyChunkSize + state.dataBuf.length < contentLength) {
-        state.bodyChunkSize += state.dataBuf.length;
-        state.bodyBuf = Buffer.concat([
-          state.bodyBuf,
-          state.dataBuf,
-        ]);
-        state.dataBuf = Buffer.from([]);
-        state.size = 0;
-        await emitBodyChunk();
-      } else {
-        const bodyChunkRemainSize = contentLength - state.bodyChunkSize;
-        if (bodyChunkRemainSize > 0) {
-          assert(state.dataBuf.length >= bodyChunkRemainSize);
-          state.bodyBuf = Buffer.concat([
-            state.bodyBuf,
-            state.dataBuf.slice(0, bodyChunkRemainSize),
-          ]);
-          state.dataBuf = state.dataBuf.slice(bodyChunkRemainSize);
-        }
-        state.size = state.dataBuf.length;
-        state.bodyChunkSize = contentLength;
-        state.timeOnBodyEnd = performance.now();
-        await emitBodyChunk();
-        state.step += 1;
-      }
-    } else {
+
+    if (contentLength === 0) {
       state.timeOnBodyEnd = performance.now();
       assert(state.bodyChunkSize === 0);
+      state.step = STEP.COMPLETE;
+      return;
+    }
+
+    if (state.bodyChunkSize + state.dataBuf.length < contentLength) {
+      state.bodyChunkSize += state.dataBuf.length;
+      state.bodyBuf = Buffer.concat([
+        state.bodyBuf,
+        state.dataBuf,
+      ]);
+      state.dataBuf = Buffer.from([]);
+      state.size = 0;
+      await emitBodyChunk();
+    } else {
+      const bodyChunkRemainSize = contentLength - state.bodyChunkSize;
+      if (bodyChunkRemainSize > 0) {
+        assert(state.dataBuf.length >= bodyChunkRemainSize);
+        state.bodyBuf = Buffer.concat([
+          state.bodyBuf,
+          state.dataBuf.slice(0, bodyChunkRemainSize),
+        ]);
+        state.dataBuf = state.dataBuf.slice(bodyChunkRemainSize);
+      }
+      state.size = state.dataBuf.length;
+      state.bodyChunkSize = contentLength;
+      state.timeOnBodyEnd = performance.now();
+      await emitBodyChunk();
       state.step += 1;
     }
   };
