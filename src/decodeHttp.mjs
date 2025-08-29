@@ -360,25 +360,30 @@ const decodeHttp = ({
 
     if (crlfIndex === -1) {
       if (searchLength === MAX_CHUNK_LENGTH) {
-        throwDecodeHttpError('parse body fail');
+        throwDecodeHttpError('chunk size line too long');
       }
       return;
     }
+
     if (crlfIndex <= 1 || chunk[crlfIndex - 1] !== crlf[0]) {
-      throwDecodeHttpError('parse body fail');
+      throwDecodeHttpError('invalid chunk size format');
     }
+
     const hexChunkSize = chunk.slice(0, crlfIndex - 1).toString();
     const chunkSize = parseInt(hexChunkSize, 16);
+
     if (Number.isNaN(chunkSize)
           || chunkSize.toString(16) !== hexChunkSize
           || chunkSize < 0
           || chunkSize > MAX_CHUNK_SIZE
     ) {
-      throwDecodeHttpError('parse body fail');
+      throwDecodeHttpError('invalid chunk size value');
     }
+
     state.dataBuf = state.dataBuf.slice(crlfIndex + 1);
     state.size = state.dataBuf.length;
     state.bodyChunkSize = chunkSize;
+
     await parseBodyWithChunk();
   };
 
