@@ -196,26 +196,30 @@ const decodeHttp = ({
     }
     const headerKey = chunk.slice(0, indexSplit).toString().trim();
     const headerValue = chunk.slice(indexSplit + 1).toString().trim();
-    if (headerKey !== '' && headerValue !== '') {
-      state.headersRaw.push(headerKey);
-      state.headersRaw.push(headerValue);
-      const headerName = headerKey.toLowerCase();
-      if (headerName === 'content-length') {
-        if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
-          throwDecodeHttpError('parse headers fail');
-        }
-        const contentLength = parseInteger(headerValue);
-        if (contentLength == null || contentLength < 0) {
-          throwDecodeHttpError('parse headers fail');
-        }
-        state.headers[headerName] = contentLength;
-      } else if (Object.hasOwnProperty.call(state.headers, headerName)) {
-        state.headers[headerName] = Array.isArray(state.headers[headerName])
-          ? [...state.headers[headerName], headerValue]
-          : [state.headers[headerName], headerValue];
-      } else {
-        state.headers[headerName] = headerValue;
+
+    if (!headerKey || !headerValue) {
+      return;
+    }
+
+    state.headersRaw.push(headerKey, headerValue);
+    const headerName = headerKey.toLowerCase();
+
+    if (headerName === 'content-length') {
+      if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
+        throwDecodeHttpError('duplicate content-length header');
       }
+      const contentLength = parseInteger(headerValue);
+      if (contentLength == null || contentLength < 0) {
+        throwDecodeHttpError('invalid content-length value');
+      }
+      state.headers[headerName] = contentLength;
+    } else if (Object.hasOwnProperty.call(state.headers, headerName)) {
+      const existing = state.headers[headerName];
+      state.headers[headerName] = Array.isArray(existing)
+        ? [...existing, headerValue]
+        : [existing, headerValue];
+    } else {
+      state.headers[headerName] = headerValue;
     }
   };
 
