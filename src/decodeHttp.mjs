@@ -306,20 +306,19 @@ const decodeHttp = ({
       state.size = 0;
       await emitBodyChunk();
     } else {
-      const bodyChunkRemainSize = contentLength - state.bodyChunkSize;
-      if (bodyChunkRemainSize > 0) {
-        assert(state.dataBuf.length >= bodyChunkRemainSize);
+      if (remainingBytes > 0) {
+        assert(state.dataBuf.length >= remainingBytes);
         state.bodyBuf = Buffer.concat([
           state.bodyBuf,
-          state.dataBuf.slice(0, bodyChunkRemainSize),
+          state.dataBuf.slice(0, remainingBytes),
         ]);
-        state.dataBuf = state.dataBuf.slice(bodyChunkRemainSize);
+        state.dataBuf = state.dataBuf.slice(remainingBytes);
       }
       state.size = state.dataBuf.length;
       state.bodyChunkSize = contentLength;
       state.timeOnBodyEnd = performance.now();
       await emitBodyChunk();
-      state.step += 1;
+      state.step = STEP.COMPLETE;
     }
   };
 
@@ -413,7 +412,7 @@ const decodeHttp = ({
     }
   };
 
-  const processes = [
+  const processors = [
     parseStartLine,
     parseHeaders,
     parseBody,
@@ -438,8 +437,8 @@ const decodeHttp = ({
       return getState();
     }
 
-    while (state.step < processes.length) {
-      const fn = processes[state.step];
+    while (state.step < processors.length) {
+      const fn = processors[state.step];
       const current = state.step;
       state.pending = true;
       await fn();
