@@ -189,7 +189,7 @@ const decodeHttp = ({
     }
   };
 
-  const parseHeaders = async () => {
+  const processHeaderLine = async () => {
     assert(!isHeaderParseComplete());
     assert(state.timeOnHeadersEnd == null);
     assert(state.timeOnStartlineEnd != null);
@@ -394,7 +394,7 @@ const decodeHttp = ({
 
   const processes = [
     parseStartLine,
-    parseHeaders,
+    processHeaderLine,
     parseBody,
   ];
 
