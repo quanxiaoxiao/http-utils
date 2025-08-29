@@ -296,12 +296,12 @@ const decodeHttp = ({
       return;
     }
 
-    if (state.bodyChunkSize + state.dataBuf.length < contentLength) {
-      state.bodyChunkSize += state.dataBuf.length;
-      state.bodyBuf = Buffer.concat([
-        state.bodyBuf,
-        state.dataBuf,
-      ]);
+    const remainingBytes = contentLength - state.bodyChunkSize;
+    const availableBytes = state.dataBuf.length;
+
+    if (remainingBytes > availableBytes) {
+      state.bodyChunkSize += availableBytes;
+      state.bodyBuf = Buffer.concat([state.bodyBuf, state.dataBuf]);
       state.dataBuf = Buffer.from([]);
       state.size = 0;
       await emitBodyChunk();
