@@ -328,32 +328,32 @@ const decodeHttp = ({
 
     assert(state.timeOnBodyEnd == null);
     if (state.bodyChunkSize !== -1) {
-      if (state.bodyChunkSize + 2 <= state.dataBuf.length) {
-        if (state.dataBuf[state.bodyChunkSize] !== crlf[0]
-              || state.dataBuf[state.bodyChunkSize + 1] !== crlf[1]) {
-          throwDecodeHttpError('parse body fail');
-        }
-        if (state.bodyChunkSize === 0) {
-          state.step += 1;
-          state.bodyChunkSize = -1;
-          state.dataBuf = state.dataBuf.slice(2);
-          state.size = state.dataBuf.length;
-          state.timeOnBodyEnd = performance.now();
-        } else {
-          const chunk = state.dataBuf.slice(0, state.bodyChunkSize);
-          state.bodyBuf = Buffer.concat([
-            state.bodyBuf,
-            chunk,
-          ]);
-          state.dataBuf = state.dataBuf.slice(state.bodyChunkSize + 2);
-          state.size = state.dataBuf.length;
-          state.bodyChunkSize = -1;
-          await emitBodyChunk();
-          await parseBodyWithChunk();
-        }
+      const totalChunkSize = state.bodyChunkSize + 2;
+      if (state.dataBuf.length < totalChunkSize) {
+        return;
+      }
+      if (state.dataBuf[state.bodyChunkSize] !== crlf[0]
+            || state.dataBuf[state.bodyChunkSize + 1] !== crlf[1]) {
+        throwDecodeHttpError('missing CRLF after chunk data');
+      }
+      if (state.bodyChunkSize === 0) {
+        state.step = STEP.COMPLETE;
+        state.bodyChunkSize = -1;
+        state.dataBuf = state.dataBuf.slice(2);
+        state.size = state.dataBuf.length;
+        state.timeOnBodyEnd = performance.now();
+      } else {
+        const chunk = state.dataBuf.slice(0, state.bodyChunkSize);
+        state.bodyBuf = Buffer.concat([state.bodyBuf, chunk]);
+        state.dataBuf = state.dataBuf.slice(state.bodyChunkSize + 2);
+        state.size = state.dataBuf.length;
+        state.bodyChunkSize = -1;
+        await emitBodyChunk();
+        await parseBodyWithChunk();
       }
       return;
     }
+
     const searchLength = Math.min(MAX_CHUNK_LENGTH, state.size);
     const chunk = state.dataBuf.slice(0, searchLength);
     const crlfIndex = chunk.findIndex((b) => b === crlf[1]);
