@@ -244,18 +244,19 @@ const decodeHttp = ({
       return;
     }
 
-    if (state.headers['transfer-encoding']
-      && state.headers['transfer-encoding'].toLowerCase() === 'chunked') {
+    const transferEncoding = state.headers['transfer-encoding'];
+
+    if (transferEncoding?.toLowerCase() === 'chunked') {
       state.bodyChunkSize = -1;
-      if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
-        delete state.headers['content-length'];
-      }
+      delete state.headers['content-length'];
     }
+
     if (isHttpStream(state.headers)) {
-      if (state.statusCode === 200
+      const isValidStream = state.statusCode === 200
         || state.statusCode === 101
-        || isHttpWebSocketUpgrade({ method: state.method, headers: state.headers })) {
-        assert(typeof onBody === 'function');
+        || isHttpWebSocketUpgrade({ method: state.method, headers: state.headers });
+      if (isValidStream) {
+        assert(typeof onBody === 'function', 'onBody callback required for streaming');
       } else {
         state.headers['content-length'] = 0;
       }
