@@ -175,9 +175,10 @@ const decodeHttp = ({
       state.httpVersion = matches[1];
       state.statusCode = parseInteger(matches[2]);
       if (state.statusCode == null) {
-        throwDecodeHttpError('parse start line fail');
+        throwDecodeHttpError('invalid status text format');
       }
     }
+
     state.dataBuf = state.dataBuf.slice(len + 2);
     state.size -= (len + 2);
     state.timeOnStartlineEnd = performance.now();
