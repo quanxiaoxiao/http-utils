@@ -183,7 +183,7 @@ const decodeHttp = ({
     state.dataBuf = state.dataBuf.slice(len + 2);
     state.size -= (len + 2);
     state.timeOnStartlineEnd = performance.now();
-    state.step += 1;
+    state.step = STEP.PARSE_HEADERS;
     if (onStartLine) {
       await onStartLine(getState());
     }
@@ -419,18 +419,15 @@ const decodeHttp = ({
   ];
 
   return async (chunk) => {
-    assert(Buffer.isBuffer(chunk));
-    assert(!isBodyParseComplete());
+    assert(Buffer.isBuffer(chunk), 'Input must be a Buffer');
+    assert(!isBodyParseComplete(), 'Parser already completed');
     state.count += 1;
     const bytes = chunk.length;
 
     if (bytes > 0) {
       state.bytes += bytes;
       state.size += bytes;
-      state.dataBuf = Buffer.concat([
-        state.dataBuf,
-        chunk,
-      ], state.size);
+      state.dataBuf = Buffer.concat([state.dataBuf, chunk], state.size);
     }
 
     if (state.pending) {
@@ -438,11 +435,14 @@ const decodeHttp = ({
     }
 
     while (state.step < processors.length) {
-      const fn = processors[state.step];
+      const processor = processors[state.step];
       const current = state.step;
       state.pending = true;
-      await fn();
-      state.pending = false;
+      try {
+        await processor();
+      } finally {
+        state.pending = false;
+      }
       if (current === state.step) {
         return getState();
       }
