@@ -189,22 +189,18 @@ const decodeHttp = ({
     }
   };
 
-  const processHeaderLine = async () => {
-    assert(!isHeaderParseComplete());
+  const parseHeaders = async () => {
+    assert(state.step === STEP.PARSE_HEADERS);
     assert(state.timeOnHeadersEnd == null);
     assert(state.timeOnStartlineEnd != null);
-    let isHeaderComplete = false;
+
     if (state.timeOnHeadersStart == null) {
       state.timeOnHeadersStart = performance.now();
     }
-    while (!isHeaderComplete
-      && state.size >= 2) {
-      const chunk = readHttpLine(
-        state.dataBuf,
-        0,
-        65535,
-        'parse startline header',
-      );
+    let isHeaderComplete = false;
+
+    while (!isHeaderComplete && state.size >= 2) {
+      const chunk = readHttpLine(state.dataBuf, 0, 65535, 'parse startline header');
       if (!chunk) {
         return;
       }
@@ -243,28 +239,32 @@ const decodeHttp = ({
         }
       }
     }
-    if (isHeaderComplete) {
-      if (state.headers['transfer-encoding']
-        && state.headers['transfer-encoding'].toLowerCase() === 'chunked') {
-        state.bodyChunkSize = -1;
-        if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
-          delete state.headers['content-length'];
-        }
+
+    if (!isHeaderComplete) {
+      return;
+    }
+
+    if (state.headers['transfer-encoding']
+      && state.headers['transfer-encoding'].toLowerCase() === 'chunked') {
+      state.bodyChunkSize = -1;
+      if (Object.hasOwnProperty.call(state.headers, 'content-length')) {
+        delete state.headers['content-length'];
       }
-      if (isHttpStream(state.headers)) {
-        if (state.statusCode === 200
-          || state.statusCode === 101
-          || isHttpWebSocketUpgrade({ method: state.method, headers: state.headers })) {
-          assert(typeof onBody === 'function');
-        } else {
-          state.headers['content-length'] = 0;
-        }
+    }
+    if (isHttpStream(state.headers)) {
+      if (state.statusCode === 200
+        || state.statusCode === 101
+        || isHttpWebSocketUpgrade({ method: state.method, headers: state.headers })) {
+        assert(typeof onBody === 'function');
+      } else {
+        state.headers['content-length'] = 0;
       }
-      state.timeOnHeadersEnd = performance.now();
-      state.step += 1;
-      if (onHeader) {
-        await onHeader(getState());
-      }
+    }
+    state.timeOnHeadersEnd = performance.now();
+    state.step = STEP.PARSE_BODY;
+
+    if (onHeader) {
+      await onHeader(getState());
     }
   };
 
@@ -394,7 +394,7 @@ const decodeHttp = ({
 
   const processes = [
     parseStartLine,
-    processHeaderLine,
+    parseHeaders,
     parseBody,
   ];
 
