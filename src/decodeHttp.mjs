@@ -67,8 +67,8 @@ const decodeHttp = ({
 }) => {
   const state = createInitialState(isRequest);
 
-  const isHeaderPraseComplete = () => state.step >= 2;
-  const isBodyParseComplete = () => state.step >= 3;
+  const isHeaderParseComplete = () => state.step >= STEP.PARSE_BODY;
+  const isBodyParseComplete = () => state.step >= STEP.COMPLETE;
 
   const getState = () => {
     const result = {
@@ -80,6 +80,7 @@ const decodeHttp = ({
       count: state.count,
       complete: isBodyParseComplete(),
       dataBuf: state.dataBuf,
+
       timeOnStartline: null,
       timeOnStartlineEnd: null,
       timeOnHeadersStart: null,
@@ -90,7 +91,7 @@ const decodeHttp = ({
       timeOnBodyEnd: null,
     };
 
-    if (isHeaderPraseComplete() && !isHttpStream(state.headers)) {
+    if (isHeaderParseComplete() && !isHttpStream(state.headers)) {
       result.body = state.bodyBuf;
     }
 
@@ -189,7 +190,7 @@ const decodeHttp = ({
   };
 
   const parseHeaders = async () => {
-    assert(!isHeaderPraseComplete());
+    assert(!isHeaderParseComplete());
     assert(state.timeOnHeadersEnd == null);
     assert(state.timeOnStartlineEnd != null);
     let isHeaderComplete = false;
