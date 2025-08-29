@@ -17,9 +17,46 @@ const COLON_CHAR_CODE = 0x3a;
 const REQUEST_STARTLINE_REG = /^([^ ]+) +([^ ]+) +HTTP\/(1\.1|1\.0|2)$/;
 const RESPONSE_STARTLINE_REG = /^HTTP\/(1\.1|1\.0|2)\s+(\d+)(.*)/;
 
+const STEP = {
+  PARSE_STARTLINE: 0,
+  PARSE_HEADERS: 1,
+  PARSE_BODY: 2,
+  COMPLETE: 3,
+};
+
 const throwDecodeHttpError = (message) => {
   throw new DecodeHttpError(`Decode Http Error, ${message}`);
 };
+
+const createInitialState = (isRequest) => ({
+  step: STEP.PARSE_STARTLINE,
+  count: 0,
+  bytes: 0,
+  isRequest,
+  pending: false,
+
+  httpVersion: null,
+  statusText: null,
+  statusCode: null,
+  method: null,
+  path: null,
+  headers: {},
+  headersRaw: [],
+
+  timeStart: performance.now(),
+  timeOnStartlineStart: null,
+  timeOnStartlineEnd: null,
+  timeOnHeadersStart: null,
+  timeOnHeadersEnd: null,
+  timeOnBodyStart: null,
+  timeOnBodyEnd: null,
+
+  size: 0,
+  bodyChunkSize: 0,
+  body: null,
+  dataBuf: Buffer.from([]),
+  bodyBuf: Buffer.from([]),
+});
 
 const decodeHttp = ({
   isRequest,
@@ -28,32 +65,7 @@ const decodeHttp = ({
   onBody,
   onEnd,
 }) => {
-  const state = {
-    step: 0,
-    count: 0,
-    bytes: 0,
-    isRequest,
-    pending: false,
-    httpVersion: null,
-    statusText: null,
-    timeStart: performance.now(),
-    timeOnStartlineStart: null,
-    timeOnStartlineEnd: null,
-    timeOnHeadersStart: null,
-    timeOnHeadersEnd: null,
-    timeOnBodyStart: null,
-    timeOnBodyEnd: null,
-    statusCode: null,
-    method: null,
-    path: null,
-    headers: {},
-    headersRaw: [],
-    size: 0,
-    bodyChunkSize: 0,
-    body: null,
-    dataBuf: Buffer.from([]),
-    bodyBuf: Buffer.from([]),
-  };
+  const state = createInitialState(isRequest);
 
   const isHeaderPraseComplete = () => state.step >= 2;
   const isBodyParseComplete = () => state.step >= 3;
