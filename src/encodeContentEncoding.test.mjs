@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import test, { beforeEach,describe } from 'node:test';
-import {
+import zlib, {
   brotliCompressSync,
   brotliDecompressSync,
   gunzipSync,
@@ -35,19 +35,31 @@ test('encodeContentEncoding', () => {
       .equals(Buffer.from('xxx')),
   );
   assert(
-    encodeContentEncoding(buf, 'br, gzip')
+    encodeContentEncoding(buf, 'br, gzip', 4)
       .buf
-      .equals(brotliCompressSync(buf)),
+      .equals(brotliCompressSync(buf, {
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: 4,
+        },
+      })),
   );
   assert(
-    encodeContentEncoding(buf, 'br,gzip')
+    encodeContentEncoding(buf, 'br,gzip', 5)
       .buf
-      .equals(brotliCompressSync(buf)),
+      .equals(brotliCompressSync(buf, {
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: 5,
+        },
+      })),
   );
   assert(
-    encodeContentEncoding(buf, 'gzip, br')
+    encodeContentEncoding(buf, 'gzip, br', 6)
       .buf
-      .equals(brotliCompressSync(buf)),
+      .equals(brotliCompressSync(buf, {
+        params: {
+          [zlib.constants.BROTLI_PARAM_QUALITY]: 5,
+        },
+      })),
   );
   assert(
     encodeContentEncoding(buf, 'gzipp, brr')

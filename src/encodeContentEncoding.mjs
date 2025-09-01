@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import { Buffer } from 'node:buffer';
-import {
+import zlib, {
   brotliCompressSync,
   gzipSync,
 } from 'node:zlib';
@@ -39,7 +39,7 @@ const parseAcceptEncoding = (acceptEncoding) => {
   return encodings.map((item) => item.encoding);
 };
 
-export default (chunk, acceptEncoding) => {
+export default (chunk, acceptEncoding, brQualityValue = 4) => {
   assert(Buffer.isBuffer(chunk), 'chunk must be a Buffer');
   if (!acceptEncoding || chunk.length === 0) {
     return {
@@ -60,10 +60,15 @@ export default (chunk, acceptEncoding) => {
   const encodings = parseAcceptEncoding(acceptEncoding);
 
   for (const encoding of encodings) {
+    assert(Number.isInteger(brQualityValue) && brQualityValue > 0 && brQualityValue <= 15);
     if (encoding === 'br') {
       return {
         name: 'br',
-        buf: brotliCompressSync(chunk),
+        buf: brotliCompressSync(chunk, {
+          params: {
+            [zlib.constants.BROTLI_PARAM_QUALITY]: brQualityValue,
+          },
+        }),
       };
     }
     if (encoding === 'gzip') {
