@@ -1,46 +1,57 @@
-const getValue = (s) => {
-  if (!s) {
+const safeDecodeURIComponent = (str) => {
+  if (!str) {
     return '';
   }
   try {
-    return decodeURIComponent(s);
-  } catch (error) {
-    return s;
+    return decodeURIComponent(str);
+  } catch {
+    return str;
   }
 };
 
+const removeQuotes = (value) => {
+  return value.startsWith('"') && value.endsWith('"')
+    ? value.slice(1, -1)
+    : value;
+};
+
 export default (str) => {
-  const data = (str || '')
+  if (!str) {
+    return {};
+  }
+
+  const data = str
     .split(';')
-    .reduce((acc, s) => {
-      const index = s.indexOf('=');
-      if (index === -1) {
-        const key = s.trim();
-        if (key) {
-          return {
-            ...acc,
-            [key]: true,
-          };
-        }
+    .reduce((acc, segment) => {
+      const trimmed = segment.trim();
+      if (!trimmed) {
         return acc;
       }
-      const key = s.slice(0, index).trim();
+
+      const equalIndex = trimmed.indexOf('=');
+
+      if (equalIndex === -1) {
+        return {
+          ...acc,
+          [trimmed]: true,
+        };
+      }
+
+      const key = trimmed.slice(0, equalIndex).trim();
       if (key === '') {
         return acc;
       }
       if (acc[key] != null) {
         return acc;
       }
-      const value = s.slice(index + 1).trim();
-      if (value.startsWith('"') && value.endsWith('"')) {
-        return {
-          ...acc,
-          [key]: getValue(value.slice(1, value.length - 1)),
-        };
-      }
+      const rawValue = trimmed.slice(equalIndex + 1).trim();
+
+      const unquotedValue = removeQuotes(rawValue);
+      const decodedValue = safeDecodeURIComponent(unquotedValue);
+
       return {
         ...acc,
-        [key]: getValue(value),
+        [key]: decodedValue,
       };
     }, {});
   return data;
