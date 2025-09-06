@@ -15,13 +15,45 @@ const removeQuotes = (value) => {
     : value;
 };
 
+const split = (str) => {
+  if (!str) {
+    return [''];
+  }
+
+  const parts = [];
+  let current = '';
+  let insideQuotes = false;
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if (char === '"') {
+      insideQuotes = !insideQuotes;
+      current += char;
+    } else if (char === ';' && !insideQuotes) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+
+  if (insideQuotes) {
+    const semicolonIndex = current.indexOf(';');
+    if (semicolonIndex !== -1) {
+      parts.push(current.slice(0, semicolonIndex));
+      return [...parts, ...split(current.slice(semicolonIndex + 1))];
+    }
+  }
+  parts.push(current);
+  return parts;
+};
+
 export default (str) => {
   if (!str) {
     return {};
   }
 
-  const data = str
-    .split(';')
+  const data = split(str)
     .reduce((acc, segment) => {
       const trimmed = segment.trim();
       if (!trimmed) {

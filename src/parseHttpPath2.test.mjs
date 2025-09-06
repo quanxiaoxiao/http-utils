@@ -30,7 +30,6 @@ describe('parseHttpPath', () => {
   describe('查询参数测试', () => {
     test('解析单个查询参数', () => {
       const result = parseHttpPath('/search?q=test');
-      console.log('xxxxxx', result);
       assert.deepEqual(result, ['/search', 'q=test', { q: 'test' }]);
     });
 
