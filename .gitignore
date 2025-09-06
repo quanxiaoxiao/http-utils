@@ -5,6 +5,7 @@ dist
 *.tar
 .DS_store
 .env
+_data/*
 _index.mjs
 _temp
 scripts/*
