@@ -1,11 +1,10 @@
 import assert from 'node:assert';
 
-import _ from 'lodash';
-
 import isHttpStream from './isHttpStream.mjs';
+import isPlainObject from './isPlainObject.mjs';
 
 export default (headers) => {
-  assert(_.isPlainObject(headers));
+  assert(isPlainObject(headers));
   if (Object.hasOwnProperty.call(headers, 'transfer-encoding')) {
     if (headers['transfer-encoding'] != null) {
       return true;

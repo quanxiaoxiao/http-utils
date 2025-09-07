@@ -1,6 +1,6 @@
 {
   "name": "@quanxiaoxiao/http-utils",
-  "version": "0.39.0",
+  "version": "0.40.0",
   "type": "module",
   "scripts": {
     "test": "node --test src/**",
@@ -24,7 +24,6 @@
     "node": ">= 20.0.0"
   },
   "dependencies": {
-    "@quanxiaoxiao/utils": "^0.17.0",
-    "lodash": "^4.17.21"
+    "@quanxiaoxiao/utils": "^0.17.0"
   }
 }

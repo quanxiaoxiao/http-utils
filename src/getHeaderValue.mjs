@@ -1,11 +1,10 @@
 import assert from 'node:assert';
 
-import _ from 'lodash';
-
 import convertObjectToArray from './convertObjectToArray.mjs';
+import isPlainObject from './isPlainObject.mjs';
 
 export default (obj, name) => {
-  assert(Array.isArray(obj) || _.isPlainObject(obj));
+  assert(Array.isArray(obj) || isPlainObject(obj));
   assert(typeof name === 'string');
   assert(name !== '');
   const arr = Array.isArray(obj) ? obj : convertObjectToArray(obj);

@@ -3,14 +3,13 @@ import assert from 'node:assert';
 import { Buffer } from 'node:buffer';
 import { Readable } from 'node:stream';
 
-import _ from 'lodash';
-
 import convertObjectToArray from './convertObjectToArray.mjs';
 import encodeHttpHeaders from './encodeHttpHeaders.mjs';
 import encodeHttpStartLine from './encodeHttpStartLine.mjs';
 import { EncodeHttpError } from './errors.mjs';
 import filterHeaders from './filterHeaders.mjs';
 import getHeaderValue from './getHeaderValue.mjs';
+import isPlainObject from './isPlainObject.mjs';
 import wrapContentChunk from './wrapContentChunk.mjs';
 
 const CHUNK_END_MARKER = Buffer.from('0\r\n\r\n');
@@ -234,7 +233,7 @@ export default (options) => {
 
   if (options.headers) {
     assert(
-      Array.isArray(options.headers) || _.isPlainObject(options.headers),
+      Array.isArray(options.headers) || isPlainObject(options.headers),
       'Headers must be an array or plain object',
     );
   }

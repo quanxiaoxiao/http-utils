@@ -1,9 +1,9 @@
 import assert from 'node:assert';
 
-import _ from 'lodash';
+import isPlainObject from './isPlainObject.mjs';
 
 export default (headers) => {
-  assert(_.isPlainObject(headers));
+  assert(isPlainObject(headers));
   if (Object.hasOwnProperty.call(headers, 'content-length')) {
     return false;
   }
