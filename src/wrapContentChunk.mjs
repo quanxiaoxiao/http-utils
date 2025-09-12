@@ -29,11 +29,11 @@ export default (chunk) => {
   for (let i = 0; i < fullChunks; i++) {
     const start = i * MAX_CHUNK_SIZE;
     const end = start + MAX_CHUNK_SIZE;
-    const chunkData = chunk.slice(start, end);
+    const chunkData = chunk.subarray(start, end);
     result[i] = createEncodedChunk(chunkData);
   }
   if (remainingSize !== 0) {
-    const remainingData = chunk.slice(fullChunks * MAX_CHUNK_SIZE);
+    const remainingData = chunk.subarray(fullChunks * MAX_CHUNK_SIZE);
     result[fullChunks] = createEncodedChunk(remainingData);
   }
   return Buffer.concat(result);
