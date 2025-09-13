@@ -1,11 +1,11 @@
 export default (headers, headerNameList) => {
+  const excludeSet = new Set(headerNameList.map(name => name.toLowerCase()));
   const result = {};
-  const keys = Object.keys(headers);
-  const arr = headerNameList.map((s) => s.toLowerCase());
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    if (!arr.includes(key.toLowerCase())) {
-      result[key] = headers[key];
+
+  for (const [key, headerValue] of Object.entries(headers)) {
+    const headerName = key.toLowerCase();
+    if (!excludeSet.has(headerName)) {
+      result[key] = headerValue;
     }
   }
 
