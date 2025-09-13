@@ -19,7 +19,7 @@ export default (data, keyName) => {
     const currentKey = keyValueArray[i];
     const currentValue = keyValueArray[i + 1];
 
-    if (typeof currentKey === 'string' && currentKey.toLowerCase() === searchKey) {
+    if (typeof currentKey === 'string' && currentKey.trim().toLowerCase() === searchKey) {
       try {
         matches.push(decodeURIComponent(currentValue));
       } catch (error) {
