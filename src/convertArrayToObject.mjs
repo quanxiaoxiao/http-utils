@@ -3,25 +3,28 @@ import assert from 'node:assert';
 import { parseInteger } from '@quanxiaoxiao/utils';
 
 export default (arr) => {
-  assert(Array.isArray(arr));
+  assert(Array.isArray(arr), 'Expected an array');
+  assert(arr.length % 2 === 0, 'Array length must be even');
   const result = {};
-  assert(arr.length % 2 === 0);
 
   for (let i = 0; i < arr.length;) {
     const key = arr[i].toLowerCase();
-    const value = arr[i + 1];
+    const rawValue = arr[i + 1];
     i += 2;
-    if (Object.hasOwnProperty.call(result, key)) {
-      if (key === 'content-length') {
-        continue;
+    if (key === 'content-length') {
+      if (!(key in result)) {
+        result[key] = parseInteger(rawValue);
       }
-      if (Array.isArray(result[key])) {
-        result[key].push(decodeURIComponent(value));
-      } else {
-        result[key] = [result[key], decodeURIComponent(value)];
-      }
+      continue;
+    }
+    const decodedValue = decodeURIComponent(rawValue);
+
+    if (key in result) {
+      result[key] = Array.isArray(result[key])
+        ? [...result[key], decodedValue]
+        : [result[key], decodedValue];
     } else {
-      result[key] = key === 'content-length' ? parseInteger(value) : decodeURIComponent(value);
+      result[key] = decodedValue;
     }
   }
 
