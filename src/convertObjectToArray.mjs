@@ -1,36 +1,34 @@
 const toString = (v) => {
-  if (typeof v !== 'string') {
-    return v.toString ? `${v.toString()}` : JSON.stringify(v);
+  const type = typeof v;
+  if (type === 'string') return v;
+  if (type === 'undefined') {
+    return 'undefined';
   }
-  return v;
+  if (v === null) {
+    return 'null';
+  }
+  if (v?.toString) return String(v);
+  return JSON.stringify(v);
 };
 
 export default (obj) => {
-  if (Array.isArray(obj)) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
     return [];
   }
-  if (obj == null) {
-    return [];
-  }
-  if (typeof obj !== 'object') {
-    return [];
-  }
+
   const result = [];
-  const keys = Object.keys(obj);
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    const value = obj[key];
-    if (value != null) {
-      if (Array.isArray(value)) {
-        for (let j = 0; j < value.length; j++) {
-          result.push(key);
-          result.push(toString(value[j]));
-        }
-      } else {
-        result.push(key);
-        result.push(toString(value));
-      }
+
+  for (const [key, value] of Object.entries(obj)) {
+    if (value == null) continue;
+
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        result.push(key, toString(item));
+      });
+    } else {
+      result.push(key, toString(value));
     }
   }
+
   return result;
 };
