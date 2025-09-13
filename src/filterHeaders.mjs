@@ -1,22 +1,21 @@
 import assert from 'node:assert';
 
-import { escapeString } from '@quanxiaoxiao/utils';
-
 export default (headers, keys) => {
-  assert(Array.isArray(headers));
-  assert(Array.isArray(keys));
+  assert(Array.isArray(headers), 'headers must be an array');
+  assert(Array.isArray(keys), 'keys must be an array');
+
   if (keys.length === 0) {
     return headers;
   }
-  const regexp = new RegExp(`^${keys.map((s) => escapeString(s)).join('|')}$`, 'i');
+
   const result = [];
-  for (let i = 0; i < headers.length;) {
+  const keySet = new Set(keys.map(key => key.toLowerCase()));
+  for (let i = 0; i < headers.length; i += 2) {
     const key = headers[i];
     const value = headers[i + 1];
-    i += 2;
-    if (!regexp.test(key)) {
-      result.push(key);
-      result.push(value);
+
+    if (!keySet.has(key.toLowerCase())) {
+      result.push(key, value === undefined ? '' : value);
     }
   }
   return result;
